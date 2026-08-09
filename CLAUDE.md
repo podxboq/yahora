@@ -45,8 +45,8 @@ Three constraints that are easy to trip over and cost a broken build:
 ./gradlew connectedAndroidTest   # instrumented tests (device/emulator required)
 ./gradlew lint                   # Android Lint
 
-# single test
-./gradlew test --tests "com.podxboq.yahora.TagRepositoryTest.deleteFailsWhenTagHasEntries"
+# single test or class — note the task: --tests is not accepted by `test`
+./gradlew testDebugUnitTest --tests "com.podxboq.yahora.data.TagRepositoryTest"
 ```
 
 Always use the Gradle wrapper, never a system-wide `gradle`.
@@ -81,6 +81,11 @@ Room is the single source of truth; no in-memory caches parallel to it.
   of showing it disabled.
 - Tags are sorted alphabetically by `name`. The favorite flag only changes
   visual emphasis; it **never** reorders the cloud.
+- Alphabetical means **`ORDER BY name COLLATE LOCALIZED`**, not byte order.
+  Stock SQLite only ships `BINARY`, `NOCASE` and `RTRIM`, but Android adds the
+  ICU-backed `LOCALIZED` and `UNICODE` collations, and they work under
+  Robolectric too. Sorting by the normalized key or by plain `name` would strand
+  "Árbol" and "ñu" after "Zumo".
 
 ## Interaction rules
 

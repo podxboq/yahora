@@ -98,6 +98,20 @@ class TagDaoTest {
     }
 
     @Test
+    fun `accented and non-ascii names sort in their alphabetical position`() = runTest {
+        // With SQLite's default byte comparison these would land after "Zumo",
+        // because "Á" and "ñ" sort above "z" in UTF-8.
+        dao.insert(Tag(name = "Zumo"))
+        dao.insert(Tag(name = "Árbol"))
+        dao.insert(Tag(name = "ñu"))
+        dao.insert(Tag(name = "Agua"))
+
+        val tags = dao.observeAll().first()
+
+        assertEquals(listOf("Agua", "Árbol", "ñu", "Zumo"), tags.map { it.name })
+    }
+
+    @Test
     fun `favorites do not alter the alphabetical order`() = runTest {
         dao.insert(Tag(name = "Water", isFavorite = true))
         dao.insert(Tag(name = "Coffee"))

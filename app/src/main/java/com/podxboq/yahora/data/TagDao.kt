@@ -26,10 +26,16 @@ import kotlinx.coroutines.flow.Flow
 interface TagDao {
 
     /**
-     * Ordered by the normalized key so that ordering ignores case, and so that
-     * the favorite flag never influences position.
+     * Ordered with Android's LOCALIZED collation, an ICU-backed collation the
+     * framework adds on top of stock SQLite. Plain byte comparison would push
+     * "Árbol" and "ñu" past "Zumo"; the normalized key would do the same, since
+     * it only lowercases. LOCALIZED groups case together, so ordering still
+     * ignores case, and the favorite flag never influences position.
+     *
+     * It follows the device locale, which is resolved when the connection is
+     * opened — after a system language change the order settles on next launch.
      */
-    @Query("SELECT * FROM tags ORDER BY name_key ASC")
+    @Query("SELECT * FROM tags ORDER BY name COLLATE LOCALIZED ASC")
     fun observeAll(): Flow<List<Tag>>
 
     @Query("SELECT * FROM tags WHERE name_key = :nameKey LIMIT 1")

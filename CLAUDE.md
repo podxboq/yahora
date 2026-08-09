@@ -120,11 +120,17 @@ Where each layer is tested:
   (`Room.inMemoryDatabaseBuilder`). This is where the foreign-key and deletion
   rules are pinned down. Foreign keys must be explicitly enabled, or `RESTRICT`
   will not be enforced and the test will pass for the wrong reason.
-- **ViewModels** — unit tests over the exposed `StateFlow`, with a test
-  dispatcher and fake or in-memory repositories. No Android framework needed.
-- **Interaction rules** — Compose UI tests, which are the only place the
-  tap/long-press behaviour and the hidden-versus-disabled menu actions can be
-  verified.
+- **ViewModels** — unit tests over the exposed `StateFlow`. Two things are
+  required for determinism, and omitting either produces tests that fail or
+  flake for reasons unrelated to the code: pass the dispatcher to `runTest` so
+  it shares the scheduler with `Dispatchers.setMain`, and route Room's own
+  threads through it with `setQueryExecutor`/`setTransactionExecutor`. See
+  `TagCloudViewModelTest`.
+- **Interaction rules** — Compose UI tests, which run **on the JVM** under
+  Robolectric (in `src/test`, not `src/androidTest`), so they stay in the fast
+  suite. Screens are split into a stateless `…Content` composable taking a
+  state object plus a callbacks data class, which is what makes this cheap; see
+  `TagCloudScreen.kt` and `TagCloudContentTest`.
 
 Keep the fast JVM suite (`./gradlew test`) as the default feedback loop; reserve
 instrumented tests for what genuinely needs a device.

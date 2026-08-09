@@ -10,4 +10,12 @@
     <string name="app_name" translatable="false">Yahora</string>
 
     <string name="tag_cloud_empty">No tags yet. Add one to start logging.</string>
+
+    <string name="add_tag">Add tag</string>
+    <string name="add_tag_dialog_title">New tag</string>
+    <string name="tag_name_label">Name</string>
+    <string name="tag_name_error_blank">Enter a name</string>
+    <string name="tag_name_error_duplicate">A tag with that name already exists</string>
+    <string name="action_create">Create</string>
+    <string name="action_cancel">Cancel</string>
 </resources>

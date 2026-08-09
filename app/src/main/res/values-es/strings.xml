@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="tag_cloud_empty">Aún no hay etiquetas. Añade una para empezar a registrar.</string>
+
+    <string name="add_tag">Añadir etiqueta</string>
+    <string name="add_tag_dialog_title">Nueva etiqueta</string>
+    <string name="tag_name_label">Nombre</string>
+    <string name="tag_name_error_blank">Escribe un nombre</string>
+    <string name="tag_name_error_duplicate">Ya existe una etiqueta con ese nombre</string>
+    <string name="action_create">Crear</string>
+    <string name="action_cancel">Cancelar</string>
 </resources>

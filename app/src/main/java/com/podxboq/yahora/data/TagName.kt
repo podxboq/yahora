@@ -27,5 +27,29 @@ import java.util.Locale
  */
 object TagName {
 
+    /**
+     * Longest a tag name may be, counted in code points. Without a cap, pasting
+     * a long text produces a chip wider than the screen and an unreadable toast.
+     */
+    const val MAX_LENGTH = 128
+
+    /** Show the remaining-characters counter once this few are left. */
+    const val COUNTER_THRESHOLD = 16
+
     fun normalize(rawName: String): String = rawName.trim().lowercase(Locale.ROOT)
+
+    /**
+     * Length as the user perceives it. `String.length` counts UTF-16 units, so
+     * it reports 2 for an emoji and would reject names that look well within
+     * the limit.
+     */
+    fun lengthOf(name: String): Int = name.codePointCount(0, name.length)
+
+    /** Keeps the first [MAX_LENGTH] code points, never splitting a surrogate pair. */
+    fun truncate(name: String): String =
+        if (lengthOf(name) <= MAX_LENGTH) {
+            name
+        } else {
+            name.substring(0, name.offsetByCodePoints(0, MAX_LENGTH))
+        }
 }

@@ -24,6 +24,7 @@ import com.podxboq.yahora.data.AddTagResult
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.LogEntryResult
 import com.podxboq.yahora.data.Tag
+import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.data.TagRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -38,6 +39,7 @@ import kotlinx.coroutines.launch
 enum class TagNameError {
     BLANK,
     DUPLICATE,
+    TOO_LONG,
 }
 
 data class TagCloudUiState(
@@ -97,8 +99,9 @@ class TagCloudViewModel(
     }
 
     fun onDraftNameChange(name: String) {
-        // Typing is the user correcting themselves: drop any previous complaint.
-        _uiState.update { it.copy(draftName = name, nameError = null) }
+        // Pasting an oversized name keeps what fits rather than rejecting it all.
+        // Typing is also the user correcting themselves: drop any previous complaint.
+        _uiState.update { it.copy(draftName = TagName.truncate(name), nameError = null) }
     }
 
     fun onDismissAddDialog() {
@@ -119,6 +122,9 @@ class TagCloudViewModel(
 
                 AddTagResult.BlankName ->
                     _uiState.update { it.copy(nameError = TagNameError.BLANK) }
+
+                AddTagResult.NameTooLong ->
+                    _uiState.update { it.copy(nameError = TagNameError.TOO_LONG) }
             }
         }
     }

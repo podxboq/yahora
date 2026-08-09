@@ -20,9 +20,9 @@ The design goal is that recording an event costs one tap and zero attention.
 
 ## Planned features
 
-- **Tag cloud** — chips flowing across the screen, each as wide as its name,
-  sorted alphabetically. Favorites are marked with a star without changing their
-  position in the ordering.
+- **Tag cloud** — chips flowing across the screen, each as wide as its name and
+  all sharing one type size, sorted alphabetically. Favorites are marked with a
+  star without changing their position in the ordering.
 - **One-tap logging** — a short tap on a tag records the current timestamp
   immediately.
 - **Context menu** — a long press offers renaming, toggling favorite, and

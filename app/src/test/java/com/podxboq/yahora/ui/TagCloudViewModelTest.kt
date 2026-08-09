@@ -20,6 +20,7 @@ package com.podxboq.yahora.ui
 import androidx.room.Room
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.Tag
+import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
 import kotlinx.coroutines.flow.first
@@ -138,6 +139,27 @@ class TagCloudViewModelTest {
         viewModel.onDraftNameChange("Tea")
 
         assertNull(viewModel.uiState.value.nameError)
+    }
+
+    @Test
+    fun `the draft never grows past the maximum length`() = runTest(dispatcher) {
+        viewModel.onAddTagClick()
+
+        viewModel.onDraftNameChange("a".repeat(TagName.MAX_LENGTH + 50))
+
+        // Pasting an oversized name keeps what fits instead of dropping it all.
+        assertEquals(TagName.MAX_LENGTH, viewModel.uiState.value.draftName.length)
+    }
+
+    @Test
+    fun `truncating the draft does not split an emoji in half`() = runTest(dispatcher) {
+        viewModel.onAddTagClick()
+
+        viewModel.onDraftNameChange("👍".repeat(TagName.MAX_LENGTH + 10))
+
+        val draft = viewModel.uiState.value.draftName
+        assertEquals(TagName.MAX_LENGTH, draft.codePointCount(0, draft.length))
+        assertTrue(draft.endsWith("👍"))
     }
 
     @Test

@@ -94,6 +94,10 @@ validates against. `YahoraDatabaseMigrationTest` shows the pattern.
   of showing it disabled.
 - Tags are sorted alphabetically by `name`. The favorite flag only changes
   visual emphasis; it **never** reorders the cloud.
+- Tag names are capped at `TagName.MAX_LENGTH` (128), measured in **code
+  points**, not `String.length` — the latter counts UTF-16 units and would
+  reject an emoji-laden name at half the visible length. The cap is enforced in
+  the repository and the dialog truncates as you type.
 - Alphabetical means **`ORDER BY name COLLATE LOCALIZED`**, not byte order.
   Stock SQLite only ships `BINARY`, `NOCASE` and `RTRIM`, but Android adds the
   ICU-backed `LOCALIZED` and `UNICODE` collations, and they work under
@@ -113,9 +117,9 @@ These are easy to get wrong; the spec is deliberate about each one.
 - Favorites are marked with a **star**, never by color alone, so the highlight
   survives color blindness and greyscale. The icon carries a content
   description.
-- The cloud uses a flowing layout where each chip is as wide as its name. This
-  knowingly departs from the original spec's "uniform grid" — it was a design
-  decision, not an oversight.
+- The cloud uses a flowing layout where **each chip is as wide as its name**.
+  The spec's "uniform size" refers to typography — every tag uses the same font
+  size and weight, with no per-tag styling — not to a uniform chip width.
 - **Long press** opens a context menu: rename, toggle favorite, view entries,
   and delete tag (only when it has no entries). Inapplicable actions are
   **omitted**, not greyed out.

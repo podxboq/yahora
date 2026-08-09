@@ -25,6 +25,7 @@ sealed interface AddTagResult {
     data class Created(val id: Long) : AddTagResult
     data object DuplicateName : AddTagResult
     data object BlankName : AddTagResult
+    data object NameTooLong : AddTagResult
 }
 
 class TagRepository(private val tagDao: TagDao) {
@@ -39,6 +40,8 @@ class TagRepository(private val tagDao: TagDao) {
     suspend fun addTag(rawName: String): AddTagResult {
         val name = rawName.trim()
         if (name.isEmpty()) return AddTagResult.BlankName
+        // The UI already caps typing; this guards every other caller.
+        if (TagName.lengthOf(name) > TagName.MAX_LENGTH) return AddTagResult.NameTooLong
         if (tagDao.findByName(name) != null) return AddTagResult.DuplicateName
 
         return try {

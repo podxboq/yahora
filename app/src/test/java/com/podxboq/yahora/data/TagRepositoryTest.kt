@@ -92,6 +92,38 @@ class TagRepositoryTest {
     }
 
     @Test
+    fun `a name of exactly the maximum length is accepted`() = runTest {
+        val name = "a".repeat(TagName.MAX_LENGTH)
+
+        assertTrue(repository.addTag(name) is AddTagResult.Created)
+        assertEquals(name, repository.observeTags().first().single().name)
+    }
+
+    @Test
+    fun `a name longer than the maximum is rejected`() = runTest {
+        val result = repository.addTag("a".repeat(TagName.MAX_LENGTH + 1))
+
+        assertEquals(AddTagResult.NameTooLong, result)
+        assertTrue(repository.observeTags().first().isEmpty())
+    }
+
+    @Test
+    fun `length is measured in code points, not UTF-16 units`() = runTest {
+        // Each of these emoji is a surrogate pair: String.length would report
+        // twice the number the user actually typed.
+        val name = "👍".repeat(TagName.MAX_LENGTH)
+
+        assertTrue(repository.addTag(name) is AddTagResult.Created)
+    }
+
+    @Test
+    fun `surrounding whitespace does not count towards the limit`() = runTest {
+        val name = "  " + "a".repeat(TagName.MAX_LENGTH) + "  "
+
+        assertTrue(repository.addTag(name) is AddTagResult.Created)
+    }
+
+    @Test
     fun `distinct names are all kept`() = runTest {
         repository.addTag("Coffee")
         repository.addTag("Tea")

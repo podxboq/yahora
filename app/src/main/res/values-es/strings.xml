@@ -9,6 +9,8 @@
     <string name="tag_name_label">Nombre</string>
     <string name="tag_name_error_blank">Escribe un nombre</string>
     <string name="tag_name_error_duplicate">Ya existe una etiqueta con ese nombre</string>
+    <string name="tag_name_error_too_long">Ese nombre es demasiado largo</string>
+    <string name="tag_name_counter">%1$d/%2$d</string>
     <string name="action_create">Crear</string>
     <string name="action_cancel">Cancelar</string>
 

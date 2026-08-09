@@ -132,6 +132,30 @@ class TagCloudContentTest {
     }
 
     @Test
+    fun `the counter appears only as the limit approaches`() {
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(isAddDialogVisible = true, draftName = "a".repeat(120)),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("120/128").assertIsDisplayed()
+    }
+
+    @Test
+    fun `no counter while the name is comfortably short`() {
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(isAddDialogVisible = true, draftName = "Coffee"),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("6/128").assertDoesNotExist()
+    }
+
+    @Test
     fun `typing a name and confirming reports it`() {
         var typed: String? = null
         var confirmed = false

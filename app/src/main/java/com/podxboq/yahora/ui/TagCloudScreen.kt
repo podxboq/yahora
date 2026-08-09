@@ -57,11 +57,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.podxboq.yahora.R
 import com.podxboq.yahora.data.Tag
+import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.ui.theme.YahoraTheme
 import java.util.Date
 
@@ -173,7 +175,11 @@ private fun TagChip(tag: Tag, onClick: () -> Unit) {
             )
             onClick()
         },
-        label = { Text(tag.name) },
+        label = {
+            // A safety net for narrow screens and large accessibility fonts: the
+            // length cap alone does not guarantee the name fits.
+            Text(tag.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
         icon = if (tag.isFavorite) {
             {
                 Icon(
@@ -224,9 +230,7 @@ private fun AddTagDialog(state: TagCloudUiState, callbacks: TagCloudCallbacks) {
                 label = { Text(stringResource(R.string.tag_name_label)) },
                 singleLine = true,
                 isError = state.nameError != null,
-                supportingText = state.nameError?.let { error ->
-                    { Text(stringResource(error.messageRes())) }
-                },
+                supportingText = supportingTextFor(state),
             )
         },
         confirmButton = {
@@ -242,9 +246,27 @@ private fun AddTagDialog(state: TagCloudUiState, callbacks: TagCloudCallbacks) {
     )
 }
 
+/**
+ * An error, if there is one; otherwise a character counter, but only once the
+ * limit is close enough to be worth mentioning. Below that the dialog stays bare.
+ */
+private fun supportingTextFor(state: TagCloudUiState): (@Composable () -> Unit)? {
+    state.nameError?.let { error ->
+        return { Text(stringResource(error.messageRes())) }
+    }
+
+    val length = TagName.lengthOf(state.draftName)
+    if (TagName.MAX_LENGTH - length > TagName.COUNTER_THRESHOLD) return null
+
+    return {
+        Text(stringResource(R.string.tag_name_counter, length, TagName.MAX_LENGTH))
+    }
+}
+
 private fun TagNameError.messageRes(): Int = when (this) {
     TagNameError.BLANK -> R.string.tag_name_error_blank
     TagNameError.DUPLICATE -> R.string.tag_name_error_duplicate
+    TagNameError.TOO_LONG -> R.string.tag_name_error_too_long
 }
 
 @Preview(showBackground = true)

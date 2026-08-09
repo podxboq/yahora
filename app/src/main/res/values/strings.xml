@@ -9,7 +9,9 @@
     <!-- Product name: deliberately identical in every language. -->
     <string name="app_name" translatable="false">Yahora</string>
 
-    <string name="tag_cloud_empty">No tags yet. Add one to start logging.</string>
+    <string name="tag_cloud_empty">No tags yet</string>
+    <string name="tag_cloud_empty_hint">Add one to start logging with a single tap.</string>
+    <string name="favorite_tag">Favorite</string>
 
     <string name="add_tag">Add tag</string>
     <string name="add_tag_dialog_title">New tag</string>

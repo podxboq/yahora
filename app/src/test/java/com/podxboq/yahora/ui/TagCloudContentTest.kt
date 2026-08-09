@@ -17,8 +17,10 @@
  */
 package com.podxboq.yahora.ui
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -80,6 +82,25 @@ class TagCloudContentTest {
         assert(tapped == coffee) { "Expected the tapped tag to be reported, was $tapped" }
         // A short tap must not open anything: no confirmation, no dialog.
         composeRule.onNodeWithText("Create").assertDoesNotExist()
+    }
+
+    @Test
+    fun `only favorite tags carry the star`() {
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    tags = listOf(
+                        Tag(id = 1, name = "Coffee", isFavorite = true),
+                        Tag(id = 2, name = "Tea"),
+                    ),
+                ),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        // The star is described for screen readers, so favorites are not
+        // signalled by shape alone.
+        composeRule.onAllNodesWithContentDescription("Favorite").assertCountEquals(1)
     }
 
     @Test

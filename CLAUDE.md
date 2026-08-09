@@ -105,7 +105,17 @@ validates against. `YahoraDatabaseMigrationTest` shows the pattern.
 These are easy to get wrong; the spec is deliberate about each one.
 
 - **Short tap** on a chip creates an `Entry` with the current timestamp
-  immediately — no intermediate screen, no confirmation dialog.
+  immediately — no intermediate screen, no confirmation dialog. It fires a
+  haptic tick: nothing moves on screen, so that tick is the only confirmation
+  a user gets without looking.
+- **Motion is deliberately minimal** — no custom animations beyond what
+  Material 3 does by default. Do not add flourishes.
+- Favorites are marked with a **star**, never by color alone, so the highlight
+  survives color blindness and greyscale. The icon carries a content
+  description.
+- The cloud uses a flowing layout where each chip is as wide as its name. This
+  knowingly departs from the original spec's "uniform grid" — it was a design
+  decision, not an oversight.
 - **Long press** opens a context menu: rename, toggle favorite, view entries,
   and delete tag (only when it has no entries). Inapplicable actions are
   **omitted**, not greyed out.

@@ -18,23 +18,33 @@
 package com.podxboq.yahora.ui
 
 import android.content.Context
+import android.os.Build
 import android.text.format.DateFormat
+import android.view.HapticFeedbackConstants
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -44,7 +54,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -117,29 +129,19 @@ fun TagCloudContent(
         },
     ) { innerPadding ->
         if (state.tags.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.tag_cloud_empty))
-            }
+            EmptyTagCloud(modifier = Modifier.padding(innerPadding))
         } else {
             FlowRow(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 state.tags.forEach { tag ->
-                    SuggestionChip(
-                        onClick = { callbacks.onTagClick(tag) },
-                        label = { Text(tag.name) },
-                    )
+                    TagChip(tag = tag, onClick = { callbacks.onTagClick(tag) })
                 }
             }
         }
@@ -147,6 +149,65 @@ fun TagCloudContent(
 
     if (state.isAddDialogVisible) {
         AddTagDialog(state = state, callbacks = callbacks)
+    }
+}
+
+/**
+ * One tag in the cloud. Favorites carry a star: the highlight must not rely on
+ * color alone, and the star is described so screen readers announce it too.
+ */
+@Composable
+private fun TagChip(tag: Tag, onClick: () -> Unit) {
+    val view = LocalView.current
+
+    SuggestionChip(
+        onClick = {
+            // The tap is the whole interaction and nothing moves on screen, so a
+            // haptic tick is the confirmation you get without having to look.
+            view.performHapticFeedback(
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    HapticFeedbackConstants.CONFIRM
+                } else {
+                    HapticFeedbackConstants.VIRTUAL_KEY
+                },
+            )
+            onClick()
+        },
+        label = { Text(tag.name) },
+        icon = if (tag.isFavorite) {
+            {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = stringResource(R.string.favorite_tag),
+                    modifier = Modifier.size(SuggestionChipDefaults.IconSize),
+                )
+            }
+        } else {
+            null
+        },
+    )
+}
+
+@Composable
+private fun EmptyTagCloud(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = stringResource(R.string.tag_cloud_empty),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.tag_cloud_empty_hint),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

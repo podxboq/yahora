@@ -22,6 +22,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
 import com.podxboq.yahora.ui.TagCloudScreen
@@ -33,12 +34,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val repository = TagRepository(YahoraDatabase.getInstance(applicationContext).tagDao())
+        val database = YahoraDatabase.getInstance(applicationContext)
+        val tagRepository = TagRepository(database.tagDao())
+        val entryRepository = EntryRepository(database.entryDao())
 
         setContent {
             YahoraTheme {
                 TagCloudScreen(
-                    viewModel = viewModel(factory = TagCloudViewModel.factory(repository)),
+                    viewModel = viewModel(
+                        factory = TagCloudViewModel.factory(tagRepository, entryRepository),
+                    ),
                 )
             }
         }

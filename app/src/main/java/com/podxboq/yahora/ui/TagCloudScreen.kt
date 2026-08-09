@@ -17,6 +17,9 @@
  */
 package com.podxboq.yahora.ui
 
+import android.content.Context
+import android.text.format.DateFormat
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -36,9 +39,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -46,6 +51,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.podxboq.yahora.R
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.ui.theme.YahoraTheme
+import java.util.Date
 
 /**
  * Everything the tag cloud can ask of its host. Grouped in one type so the
@@ -56,11 +62,19 @@ data class TagCloudCallbacks(
     val onDraftNameChange: (String) -> Unit,
     val onConfirmAddTag: () -> Unit,
     val onDismissAddDialog: () -> Unit,
+    val onTagClick: (Tag) -> Unit,
 )
 
 @Composable
 fun TagCloudScreen(viewModel: TagCloudViewModel, modifier: Modifier = Modifier) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    LaunchedEffect(viewModel) {
+        viewModel.messages.collect { message ->
+            Toast.makeText(context, message.toText(context), Toast.LENGTH_SHORT).show()
+        }
+    }
 
     TagCloudContent(
         state = state,
@@ -69,9 +83,21 @@ fun TagCloudScreen(viewModel: TagCloudViewModel, modifier: Modifier = Modifier) 
             onDraftNameChange = viewModel::onDraftNameChange,
             onConfirmAddTag = viewModel::onConfirmAddTag,
             onDismissAddDialog = viewModel::onDismissAddDialog,
+            onTagClick = viewModel::onTagClick,
         ),
         modifier = modifier,
     )
+}
+
+private fun TagCloudMessage.toText(context: Context): String = when (this) {
+    is TagCloudMessage.EntryLogged -> context.getString(
+        R.string.entry_logged,
+        tagName,
+        // The device's own 12h/24h preference, not a hardcoded pattern.
+        DateFormat.getTimeFormat(context).format(Date(timestamp)),
+    )
+
+    is TagCloudMessage.EntryFailed -> context.getString(R.string.entry_failed, tagName)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -111,7 +137,7 @@ fun TagCloudContent(
             ) {
                 state.tags.forEach { tag ->
                     SuggestionChip(
-                        onClick = { /* Logging an entry arrives with the next feature. */ },
+                        onClick = { callbacks.onTagClick(tag) },
                         label = { Text(tag.name) },
                     )
                 }
@@ -168,7 +194,7 @@ private fun TagCloudContentPreview() {
             state = TagCloudUiState(
                 tags = listOf(Tag(id = 1, name = "Coffee"), Tag(id = 2, name = "Medication")),
             ),
-            callbacks = TagCloudCallbacks({}, {}, {}, {}),
+            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}),
         )
     }
 }

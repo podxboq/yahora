@@ -21,18 +21,43 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Tag::class],
-    version = 1,
+    entities = [Tag::class, Entry::class],
+    version = 2,
     exportSchema = true,
 )
 abstract class YahoraDatabase : RoomDatabase() {
 
     abstract fun tagDao(): TagDao
 
+    abstract fun entryDao(): EntryDao
+
     companion object {
         private const val DATABASE_NAME = "yahora.db"
+
+        /**
+         * Adds the entries table. The statements are copied verbatim from the
+         * exported schema in `app/schemas`, which is what Room validates the
+         * migrated database against.
+         */
+        internal val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `entries` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`tag_id` INTEGER NOT NULL, " +
+                        "`timestamp` INTEGER NOT NULL, " +
+                        "FOREIGN KEY(`tag_id`) REFERENCES `tags`(`id`) " +
+                        "ON UPDATE RESTRICT ON DELETE RESTRICT )",
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_entries_tag_id` ON `entries` (`tag_id`)",
+                )
+            }
+        }
 
         @Volatile
         private var instance: YahoraDatabase? = null
@@ -44,8 +69,7 @@ abstract class YahoraDatabase : RoomDatabase() {
 
         private fun build(context: Context): YahoraDatabase =
             Room.databaseBuilder(context, YahoraDatabase::class.java, DATABASE_NAME)
-                // Foreign keys are enforced per connection and are off by default;
-                // Entry will depend on this once it exists.
+                .addMigrations(MIGRATION_1_2)
                 .build()
     }
 }

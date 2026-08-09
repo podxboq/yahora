@@ -9,4 +9,7 @@
     <string name="tag_name_error_duplicate">Ya existe una etiqueta con ese nombre</string>
     <string name="action_create">Crear</string>
     <string name="action_cancel">Cancelar</string>
+
+    <string name="entry_logged">%1$s registrado a las %2$s</string>
+    <string name="entry_failed">No se pudo registrar %1$s: esa etiqueta ya no existe</string>
 </resources>

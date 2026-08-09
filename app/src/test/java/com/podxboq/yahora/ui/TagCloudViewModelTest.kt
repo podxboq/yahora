@@ -18,8 +18,11 @@
 package com.podxboq.yahora.ui
 
 import androidx.room.Room
+import com.podxboq.yahora.data.EntryRepository
+import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -58,7 +61,10 @@ class TagCloudViewModelTest {
             .setQueryExecutor(dispatcher.asExecutor())
             .setTransactionExecutor(dispatcher.asExecutor())
             .build()
-        viewModel = TagCloudViewModel(TagRepository(database.tagDao()))
+        viewModel = TagCloudViewModel(
+            tagRepository = TagRepository(database.tagDao()),
+            entryRepository = EntryRepository(database.entryDao()) { NOW },
+        )
     }
 
     @After
@@ -148,6 +154,50 @@ class TagCloudViewModelTest {
     }
 
     @Test
+    fun `tapping a tag logs an entry and announces it`() = runTest(dispatcher) {
+        viewModel.onAddTagClick()
+        viewModel.onDraftNameChange("Coffee")
+        viewModel.onConfirmAddTag()
+        advanceUntilIdle()
+        val tag = viewModel.uiState.value.tags.single()
+
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+
+        assertEquals(
+            TagCloudMessage.EntryLogged(tagName = "Coffee", timestamp = NOW),
+            viewModel.messages.first(),
+        )
+        assertEquals(1, database.entryDao().countForTag(tag.id))
+    }
+
+    @Test
+    fun `tapping the same tag twice logs two entries`() = runTest(dispatcher) {
+        viewModel.onAddTagClick()
+        viewModel.onDraftNameChange("Coffee")
+        viewModel.onConfirmAddTag()
+        advanceUntilIdle()
+        val tag = viewModel.uiState.value.tags.single()
+
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+
+        assertEquals(2, database.entryDao().countForTag(tag.id))
+    }
+
+    @Test
+    fun `tapping a tag that no longer exists announces the failure`() = runTest(dispatcher) {
+        val ghost = Tag(id = 404, name = "Ghost")
+
+        viewModel.onTagClick(ghost)
+        advanceUntilIdle()
+
+        assertEquals(TagCloudMessage.EntryFailed(tagName = "Ghost"), viewModel.messages.first())
+    }
+
+    @Test
     fun `tags are exposed alphabetically`() = runTest(dispatcher) {
         listOf("Water", "coffee", "Tea").forEach { name ->
             viewModel.onAddTagClick()
@@ -160,5 +210,9 @@ class TagCloudViewModelTest {
             listOf("coffee", "Tea", "Water"),
             viewModel.uiState.value.tags.map { it.name },
         )
+    }
+
+    private companion object {
+        const val NOW = 1_700_000_000_000L
     }
 }

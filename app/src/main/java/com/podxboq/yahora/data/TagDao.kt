@@ -47,6 +47,15 @@ interface TagDao {
      */
     @Insert
     suspend fun insert(tag: Tag): Long
+
+    /**
+     * Deletes a tag. Fails if the tag still has entries — history is never
+     * discarded as a side effect.
+     *
+     * @throws android.database.sqlite.SQLiteConstraintException if entries exist.
+     */
+    @Query("DELETE FROM tags WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }
 
 /** Looks a tag up by a raw, user-typed name. */

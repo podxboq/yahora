@@ -21,11 +21,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.podxboq.yahora.data.AddTagResult
+import com.podxboq.yahora.data.EntryRepository
+import com.podxboq.yahora.data.LogEntryResult
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagRepository
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -42,16 +47,48 @@ data class TagCloudUiState(
     val nameError: TagNameError? = null,
 )
 
-class TagCloudViewModel(private val repository: TagRepository) : ViewModel() {
+/**
+ * A one-shot announcement for the user, shown and forgotten. Kept out of
+ * [TagCloudUiState] so it cannot be replayed when the screen recomposes.
+ */
+sealed interface TagCloudMessage {
+    data class EntryLogged(val tagName: String, val timestamp: Long) : TagCloudMessage
+    data class EntryFailed(val tagName: String) : TagCloudMessage
+}
+
+class TagCloudViewModel(
+    private val tagRepository: TagRepository,
+    private val entryRepository: EntryRepository,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagCloudUiState())
     val uiState: StateFlow<TagCloudUiState> = _uiState.asStateFlow()
 
+    private val _messages = Channel<TagCloudMessage>(Channel.BUFFERED)
+    val messages: Flow<TagCloudMessage> = _messages.receiveAsFlow()
+
     init {
         viewModelScope.launch {
-            repository.observeTags().collect { tags ->
+            tagRepository.observeTags().collect { tags ->
                 _uiState.update { it.copy(tags = tags) }
             }
+        }
+    }
+
+    /**
+     * A short tap logs an entry straight away: no intermediate screen and no
+     * confirmation dialog, per the product spec.
+     */
+    fun onTagClick(tag: Tag) {
+        viewModelScope.launch {
+            val message = when (val result = entryRepository.logEntry(tag.id)) {
+                is LogEntryResult.Logged ->
+                    TagCloudMessage.EntryLogged(tag.name, result.timestamp)
+
+                LogEntryResult.TagNotFound ->
+                    TagCloudMessage.EntryFailed(tag.name)
+            }
+            _messages.send(message)
         }
     }
 
@@ -71,7 +108,7 @@ class TagCloudViewModel(private val repository: TagRepository) : ViewModel() {
     fun onConfirmAddTag() {
         val name = _uiState.value.draftName
         viewModelScope.launch {
-            when (repository.addTag(name)) {
+            when (tagRepository.addTag(name)) {
                 is AddTagResult.Created ->
                     _uiState.update {
                         it.copy(isAddDialogVisible = false, draftName = "", nameError = null)
@@ -87,11 +124,14 @@ class TagCloudViewModel(private val repository: TagRepository) : ViewModel() {
     }
 
     companion object {
-        fun factory(repository: TagRepository): ViewModelProvider.Factory =
+        fun factory(
+            tagRepository: TagRepository,
+            entryRepository: EntryRepository,
+        ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    TagCloudViewModel(repository) as T
+                    TagCloudViewModel(tagRepository, entryRepository) as T
             }
     }
 }

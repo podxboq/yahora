@@ -18,4 +18,8 @@
     <string name="tag_name_error_duplicate">A tag with that name already exists</string>
     <string name="action_create">Create</string>
     <string name="action_cancel">Cancel</string>
+
+    <!-- %1$s is the tag name, %2$s the time the entry was logged at. -->
+    <string name="entry_logged">%1$s logged at %2$s</string>
+    <string name="entry_failed">Could not log %1$s: that tag no longer exists</string>
 </resources>

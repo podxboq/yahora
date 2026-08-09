@@ -65,6 +65,24 @@ class TagCloudContentTest {
     }
 
     @Test
+    fun `tapping a tag reports it, with no dialog in between`() {
+        var tapped: Tag? = null
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee)),
+                callbacks = noopCallbacks.copy(onTagClick = { tapped = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Coffee").performClick()
+
+        assert(tapped == coffee) { "Expected the tapped tag to be reported, was $tapped" }
+        // A short tap must not open anything: no confirmation, no dialog.
+        composeRule.onNodeWithText("Create").assertDoesNotExist()
+    }
+
+    @Test
     fun `the dialog reports a duplicate name`() {
         composeRule.setContent {
             TagCloudContent(
@@ -118,5 +136,6 @@ class TagCloudContentTest {
         onDraftNameChange = {},
         onConfirmAddTag = {},
         onDismissAddDialog = {},
+        onTagClick = {},
     )
 }

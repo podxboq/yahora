@@ -71,6 +71,19 @@ Two layers under `com.podxboq.yahora`:
 
 Room is the single source of truth; no in-memory caches parallel to it.
 
+Two conventions worth following rather than reinventing:
+
+- **One-shot user messages** (toasts) travel over a `Channel` exposed as a
+  `Flow`, never as a field of the UI state — state would replay them on every
+  recomposition and configuration change. See `TagCloudMessage`.
+- **The clock is injected** (`EntryRepository(dao) { now }`), so tests pin
+  timestamps instead of asserting against wall time. Never call
+  `System.currentTimeMillis()` directly inside a repository or ViewModel.
+
+Schema changes need a `Migration` in `YahoraDatabase` plus a test; copy the SQL
+verbatim from the exported schema under `app/schemas`, which is what Room
+validates against. `YahoraDatabaseMigrationTest` shows the pattern.
+
 ## Domain model and invariants
 
 `Tag(id, name, isFavorite)` and `Entry(id, tagId, timestamp)`.

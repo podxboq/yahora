@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Default locale (English). This file is the fallback for any locale without a
+  translation. Spanish lives in res/values-es/strings.xml.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:locale="en">
+
+    <!-- Product name: deliberately identical in every language. -->
+    <string name="app_name" translatable="false">Yahora</string>
+
+    <string name="tag_cloud_empty">No tags yet. Add one to start logging.</string>
+</resources>

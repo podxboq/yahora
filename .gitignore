@@ -32,3 +32,9 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Personal docs
+personal_docs
+
+# Local agent notes (machine-specific; CLAUDE.md itself is tracked)
+CLAUDE.local.md

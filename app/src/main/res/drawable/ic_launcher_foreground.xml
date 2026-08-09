@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Placeholder launcher icon: a clock face whose hands sketch a "Y".
+  Drawn inside the 72dp safe zone of the 108dp adaptive canvas so no launcher
+  mask clips the hands. To be replaced by the final artwork.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:pathData="M54,30 A24,24 0 1,1 53.98,30 Z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4"
+        android:fillColor="@android:color/transparent" />
+
+    <path
+        android:pathData="M44,44 L54,54 L64,44"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+
+    <path
+        android:pathData="M54,54 L54,68"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="4.5"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent" />
+</vector>

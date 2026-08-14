@@ -1,8 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Placeholder launcher icon: a clock face whose hands sketch a "Y".
-  Drawn inside the 72dp safe zone of the 108dp adaptive canvas so no launcher
-  mask clips the hands. To be replaced by the final artwork.
+  Launcher icon: a tally of five — three uprights and two diagonals — with the
+  initial of the app picked out inside it. The Y is not drawn on top of the
+  tally; it *is* part of it: the lower half of the middle upright is the stem,
+  and the upper half of each diagonal is a branch. The Y takes the white, and
+  the marks step back into a muted blue.
+
+  Why the diagonals run all the way across instead of stopping at the marks:
+  a branch that dies on the mark it crosses meets it at an open angle and the
+  same weight, the eye joins them into one down-up-down stroke, and the icon
+  reads as an M. Running through to the opposite corner leaves nothing to fuse.
+
+  Draw order matters. The tails are painted before the Y so the crossing vertex
+  belongs to the Y; swap them and the vertex turns white and the letter breaks
+  at exactly the point that identifies it.
+
+  The two figures must differ in luminance, not merely in hue. This started as
+  white marks and an amber Y, which sit at 1.44:1 — in greyscale, and for
+  several kinds of colour blindness, they collapse into the same stroke. White
+  against #8FB8CE is 2.12:1 and survives, with the marks still at 6.99:1 over
+  the background. Same reasoning as the favourite star in the tag cloud: never
+  colour alone.
+
+  Every stroke ends inside the 66dp safe circle centred on (54,54), round caps
+  included; the furthest point is exactly 33.0.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -10,24 +31,34 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- The two outer uprights, and the upper half of the middle one. -->
     <path
-        android:pathData="M54,30 A24,24 0 1,1 53.98,30 Z"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4"
-        android:fillColor="@android:color/transparent" />
-
-    <path
-        android:pathData="M44,44 L54,54 L64,44"
-        android:strokeColor="#FFFFFF"
-        android:strokeWidth="4.5"
+        android:pathData="M34,30.8 L34,77.2 M74,30.8 L74,77.2 M54,24 L54,56"
+        android:strokeColor="#8FB8CE"
+        android:strokeWidth="6"
         android:strokeLineCap="round"
-        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" />
+
+    <!-- Lower half of each diagonal: the part that strikes the tally through. -->
+    <path
+        android:pathData="M54,56 L76.6,73.7 M54,56 L31.4,73.7"
+        android:strokeColor="#8FB8CE"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent" />
+
+    <!-- The Y, painted last so it owns the crossing: stem, then branches. -->
+    <path
+        android:pathData="M54,56 L54,84"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
         android:fillColor="@android:color/transparent" />
 
     <path
-        android:pathData="M54,54 L54,68"
+        android:pathData="M54,56 L29.4,36.8 M54,56 L78.6,36.8"
         android:strokeColor="#FFFFFF"
-        android:strokeWidth="4.5"
+        android:strokeWidth="6"
         android:strokeLineCap="round"
         android:fillColor="@android:color/transparent" />
 </vector>

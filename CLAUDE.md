@@ -162,7 +162,11 @@ These are easy to get wrong; the spec is deliberate about each one.
   formatted from patterns in `strings.xml`, so a new locale never means
   touching Kotlin.
 - Deleting an individual entry **does** require a confirmation dialog. Deleting
-  a tag (only possible when empty) does **not** — no history is lost.
+  a tag (only possible when empty) does **not** — no history is lost. The entry
+  is reached by **long pressing its row** in the tree, the same gesture that
+  opens a chip's menu; a swipe would promise an immediacy the mandatory
+  confirmation then takes back. The short tap on an entry is deliberately left
+  free: editing its timestamp is what will claim it.
 - Entry timestamps are editable after the fact.
 
 ## Animation criteria

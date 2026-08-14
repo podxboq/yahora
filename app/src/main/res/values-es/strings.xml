@@ -32,6 +32,10 @@
 
     <string name="action_back">Atrás</string>
     <string name="tag_detail_empty">Aún no hay registros</string>
+    <string name="entry_menu_delete">Borrar</string>
+    <string name="delete_entry_dialog_title">¿Borrar este registro?</string>
+    <string name="delete_entry_dialog_text">Se registró a las %1$s. No se puede deshacer.</string>
+    <string name="action_delete">Borrar</string>
     <string name="tag_detail_expand">Desplegar</string>
     <string name="tag_detail_collapse">Plegar</string>
     <string name="month_year_pattern">LLLL \'de\' yyyy</string>

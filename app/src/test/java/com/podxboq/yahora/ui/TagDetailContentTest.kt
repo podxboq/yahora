@@ -20,10 +20,12 @@ package com.podxboq.yahora.ui
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
 import com.podxboq.yahora.data.Entry
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -163,8 +165,95 @@ class TagDetailContentTest {
         composeRule.onNodeWithText("No entries yet").assertIsDisplayed()
     }
 
+    @Test
+    fun `long pressing an entry opens its menu`() {
+        var pressed: TimeNode? = null
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(expanded = setOf("2026-08", "2026-08-14")),
+                callbacks = noopCallbacks.copy(onEntryLongClick = { pressed = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("09:15:30").performTouchInput { longClick() }
+
+        assert(pressed?.entry?.id == 1L) { "Expected the entry to be reported, was $pressed" }
+    }
+
+    @Test
+    fun `long pressing a branch opens nothing`() {
+        var pressed: TimeNode? = null
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(),
+                callbacks = noopCallbacks.copy(onEntryLongClick = { pressed = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("August 2026").performTouchInput { longClick() }
+
+        assert(pressed == null) { "A month is not an entry: nothing to delete, was $pressed" }
+    }
+
+    @Test
+    fun `the entry menu offers deleting it`() {
+        var deleting: TimeNode? = null
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(expanded = setOf("2026-08", "2026-08-14"), menuEntryId = 1L),
+                callbacks = noopCallbacks.copy(onDeleteEntryClick = { deleting = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Delete").performClick()
+
+        assert(deleting?.entry?.id == 1L) { "Expected the delete action to report the entry" }
+    }
+
+    @Test
+    fun `deleting an entry is confirmed first`() {
+        var confirmed = false
+        val doomed = stateOf(expanded = setOf("2026-08", "2026-08-14"))
+            .months.single().days.first().times.last()
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(
+                    expanded = setOf("2026-08", "2026-08-14"),
+                    pendingDeletion = doomed,
+                ),
+                callbacks = noopCallbacks.copy(onConfirmDeleteEntry = { confirmed = true }),
+            )
+        }
+
+        // The dialog names the entry it is about to remove — the row behind it
+        // shows that time too, so the whole sentence is what identifies it.
+        composeRule.onNodeWithText("Delete this entry?").assertIsDisplayed()
+        composeRule.onNodeWithText("It was logged at 09:15:30. This cannot be undone.")
+            .assertIsDisplayed()
+
+        composeRule.onNodeWithText("Delete").performClick()
+
+        assert(confirmed) { "Expected the deletion to be confirmed" }
+    }
+
+    @Test
+    fun `no confirmation dialog until one is asked for`() {
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(expanded = setOf("2026-08", "2026-08-14")),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("Delete this entry?").assertDoesNotExist()
+    }
+
     /** Three entries on 14 August, one on 2 August. */
-    private fun stateOf(expanded: Set<String> = emptySet()) = TagDetailUiState(
+    private fun stateOf(
+        expanded: Set<String> = emptySet(),
+        menuEntryId: Long? = null,
+        pendingDeletion: TimeNode? = null,
+    ) = TagDetailUiState(
         tagName = "Coffee",
         months = listOf(
             entryAt(1, "2026-08-14T09:15:30"),
@@ -173,6 +262,8 @@ class TagDetailContentTest {
             entryAt(4, "2026-08-02T07:30:11"),
         ).groupIntoMonths(ZoneOffset.UTC),
         expandedKeys = expanded,
+        menuEntryId = menuEntryId,
+        entryPendingDeletion = pendingDeletion,
     )
 
     private fun entryAt(id: Long, localDateTime: String): Entry =
@@ -182,5 +273,13 @@ class TagDetailContentTest {
             timestamp = LocalDateTime.parse(localDateTime).toInstant(ZoneOffset.UTC).toEpochMilli(),
         )
 
-    private val noopCallbacks = TagDetailCallbacks(onToggleNode = {}, onBack = {})
+    private val noopCallbacks = TagDetailCallbacks(
+        onToggleNode = {},
+        onBack = {},
+        onEntryLongClick = {},
+        onDismissEntryMenu = {},
+        onDeleteEntryClick = {},
+        onConfirmDeleteEntry = {},
+        onDismissDeleteEntry = {},
+    )
 }

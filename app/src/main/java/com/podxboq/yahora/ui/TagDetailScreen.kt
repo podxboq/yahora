@@ -17,8 +17,10 @@
  */
 package com.podxboq.yahora.ui
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -33,12 +35,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +54,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -66,6 +73,11 @@ import java.util.Locale
 data class TagDetailCallbacks(
     val onToggleNode: (String) -> Unit,
     val onBack: () -> Unit,
+    val onEntryLongClick: (TimeNode) -> Unit,
+    val onDismissEntryMenu: () -> Unit,
+    val onDeleteEntryClick: (TimeNode) -> Unit,
+    val onConfirmDeleteEntry: () -> Unit,
+    val onDismissDeleteEntry: () -> Unit,
 )
 
 @Composable
@@ -81,6 +93,11 @@ fun TagDetailScreen(
         callbacks = TagDetailCallbacks(
             onToggleNode = viewModel::onToggleNode,
             onBack = onBack,
+            onEntryLongClick = viewModel::onEntryLongClick,
+            onDismissEntryMenu = viewModel::onDismissEntryMenu,
+            onDeleteEntryClick = viewModel::onDeleteEntryClick,
+            onConfirmDeleteEntry = viewModel::onConfirmDeleteEntry,
+            onDismissDeleteEntry = viewModel::onDismissDeleteEntry,
         ),
         modifier = modifier,
     )
@@ -136,7 +153,9 @@ fun TagDetailContent(
                     TreeRow(
                         row = row,
                         isExpanded = state.isExpanded(row.node.key),
-                        onClick = { callbacks.onToggleNode(row.node.key) },
+                        isMenuOpen = state.menuEntryId != null &&
+                            state.menuEntryId == (row.node as? TimeNode)?.entry?.id,
+                        callbacks = callbacks,
                         // Rows shift as branches open and close; animating the
                         // move keeps the eye on the row it was reading.
                         modifier = Modifier.animateItem(),
@@ -145,6 +164,33 @@ fun TagDetailContent(
             }
         }
     }
+
+    state.entryPendingDeletion?.let { node ->
+        DeleteEntryDialog(node = node, callbacks = callbacks)
+    }
+}
+
+/**
+ * Removing an entry is asked about first: unlike deleting an empty tag, this
+ * one loses history, and nothing brings it back.
+ */
+@Composable
+private fun DeleteEntryDialog(node: TimeNode, callbacks: TagDetailCallbacks) {
+    AlertDialog(
+        onDismissRequest = callbacks.onDismissDeleteEntry,
+        title = { Text(stringResource(R.string.delete_entry_dialog_title)) },
+        text = { Text(stringResource(R.string.delete_entry_dialog_text, node.label())) },
+        confirmButton = {
+            TextButton(onClick = callbacks.onConfirmDeleteEntry) {
+                Text(stringResource(R.string.action_delete))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = callbacks.onDismissDeleteEntry) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
 }
 
 /** One node, plus where it sits in the tree. */
@@ -172,39 +218,74 @@ private fun List<MonthNode>.flattenVisible(expandedKeys: Set<String>): List<Visi
 private fun TreeRow(
     row: VisibleRow,
     isExpanded: Boolean,
-    onClick: () -> Unit,
+    isMenuOpen: Boolean,
+    callbacks: TagDetailCallbacks,
     modifier: Modifier = Modifier,
 ) {
-    // Entries are the last level: they have nothing left to open.
+    // Entries are the last level: they have nothing left to open, and they are
+    // the only rows there is anything to do to.
     val branch = row.node as? BranchNode
+    val entry = row.node as? TimeNode
+    val view = LocalView.current
 
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(enabled = branch != null, onClick = onClick)
-            .padding(start = 16.dp + 24.dp * row.depth, end = 16.dp, top = 12.dp, bottom = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        if (branch != null) {
-            ExpandIndicator(isExpanded = isExpanded)
-        } else {
-            Spacer(Modifier.width(24.dp))
-        }
-        Text(
-            text = row.node.label(),
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        // An entry states its own time in the label; only branches count.
-        if (branch != null) {
+    Box(modifier = modifier) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (entry != null) {
+                        // The short tap is left free on purpose: editing a
+                        // timestamp is what will claim it.
+                        Modifier.combinedClickable(
+                            onClick = {},
+                            onLongClick = {
+                                // Same tick the cloud gives: the menu is opening.
+                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                callbacks.onEntryLongClick(entry)
+                            },
+                        )
+                    } else {
+                        Modifier.clickable { callbacks.onToggleNode(row.node.key) }
+                    },
+                )
+                .padding(
+                    start = 16.dp + 24.dp * row.depth,
+                    end = 16.dp,
+                    top = 12.dp,
+                    bottom = 12.dp,
+                ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (branch != null) {
+                ExpandIndicator(isExpanded = isExpanded)
+            } else {
+                Spacer(Modifier.width(24.dp))
+            }
             Text(
-                text = branch.childCountLabel(),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = row.node.label(),
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
+            // An entry states its own time in the label; only branches count.
+            if (branch != null) {
+                Text(
+                    text = branch.childCountLabel(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        if (entry != null) {
+            DropdownMenu(expanded = isMenuOpen, onDismissRequest = callbacks.onDismissEntryMenu) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.entry_menu_delete)) },
+                    onClick = { callbacks.onDeleteEntryClick(entry) },
+                )
+            }
         }
     }
 }
@@ -276,7 +357,7 @@ private fun TagDetailContentPreview() {
                 months = entries.groupIntoMonths(ZoneOffset.UTC),
                 expandedKeys = setOf("2026-08"),
             ),
-            callbacks = TagDetailCallbacks(onToggleNode = {}, onBack = {}),
+            callbacks = TagDetailCallbacks({}, {}, {}, {}, {}, {}, {}),
         )
     }
 }

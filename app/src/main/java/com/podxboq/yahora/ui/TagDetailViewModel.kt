@@ -35,6 +35,10 @@ data class TagDetailUiState(
     val months: List<MonthNode> = emptyList(),
     /** Keys of the nodes the user has opened; see [EntryNode.key]. */
     val expandedKeys: Set<String> = emptySet(),
+    /** The entry whose context menu is open, if any. */
+    val menuEntryId: Long? = null,
+    /** The entry waiting to be confirmed for deletion, if any. */
+    val entryPendingDeletion: TimeNode? = null,
 ) {
     fun isExpanded(key: String): Boolean = key in expandedKeys
 }
@@ -48,7 +52,7 @@ data class TagDetailUiState(
 class TagDetailViewModel(
     tagId: Long,
     tagRepository: TagRepository,
-    entryRepository: EntryRepository,
+    private val entryRepository: EntryRepository,
     zone: ZoneId = ZoneId.systemDefault(),
 ) : ViewModel() {
 
@@ -84,6 +88,35 @@ class TagDetailViewModel(
                 state.expandedKeys + key
             }
             state.copy(expandedKeys = expanded)
+        }
+    }
+
+    /** A long press on an entry offers what can be done to it. */
+    fun onEntryLongClick(node: TimeNode) {
+        _uiState.update { it.copy(menuEntryId = node.entry.id) }
+    }
+
+    fun onDismissEntryMenu() {
+        _uiState.update { it.copy(menuEntryId = null) }
+    }
+
+    /**
+     * Deleting an entry does ask first — unlike deleting an empty tag, this one
+     * loses history, and nothing brings it back.
+     */
+    fun onDeleteEntryClick(node: TimeNode) {
+        _uiState.update { it.copy(menuEntryId = null, entryPendingDeletion = node) }
+    }
+
+    fun onDismissDeleteEntry() {
+        _uiState.update { it.copy(entryPendingDeletion = null) }
+    }
+
+    fun onConfirmDeleteEntry() {
+        val node = _uiState.value.entryPendingDeletion ?: return
+        viewModelScope.launch {
+            entryRepository.deleteEntry(node.entry.id)
+            _uiState.update { it.copy(entryPendingDeletion = null) }
         }
     }
 

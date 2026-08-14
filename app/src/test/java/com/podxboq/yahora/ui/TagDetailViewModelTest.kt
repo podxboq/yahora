@@ -35,6 +35,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -150,6 +151,92 @@ class TagDetailViewModelTest {
         advanceUntilIdle()
 
         assertEquals("2026-08", viewModel.uiState.value.months.single().key)
+    }
+
+    @Test
+    fun `long pressing an entry opens its menu`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val entry = viewModel.uiState.value.months.single().days.single().times.single()
+
+        viewModel.onEntryLongClick(entry)
+
+        assertEquals(entry.entry.id, viewModel.uiState.value.menuEntryId)
+    }
+
+    @Test
+    fun `deleting an entry asks first`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val entry = viewModel.uiState.value.months.single().days.single().times.single()
+
+        viewModel.onEntryLongClick(entry)
+        viewModel.onDeleteEntryClick(entry)
+        advanceUntilIdle()
+
+        // Nothing is gone yet: losing a record is not undoable, so it is asked
+        // about first — unlike deleting an empty tag.
+        val state = viewModel.uiState.value
+        assertEquals(entry, state.entryPendingDeletion)
+        assertNull(state.menuEntryId)
+        assertEquals(1, database.entryDao().countForTag(tagId))
+    }
+
+    @Test
+    fun `confirming removes the entry from the tree`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30", "2026-08-14T18:00:00")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val day = viewModel.uiState.value.months.single().days.single()
+        val newest = day.times.first()
+
+        viewModel.onDeleteEntryClick(newest)
+        viewModel.onConfirmDeleteEntry()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.entryPendingDeletion)
+        assertEquals(
+            listOf(LocalDateTime.parse("2026-08-14T09:15:30")),
+            state.months.single().days.single().times.map { it.time },
+        )
+    }
+
+    @Test
+    fun `cancelling keeps the entry`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val entry = viewModel.uiState.value.months.single().days.single().times.single()
+
+        viewModel.onDeleteEntryClick(entry)
+        viewModel.onDismissDeleteEntry()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.entryPendingDeletion)
+        assertEquals(1, database.entryDao().countForTag(tagId))
+    }
+
+    @Test
+    fun `deleting the last entry empties the tree`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val entry = viewModel.uiState.value.months.single().days.single().times.single()
+
+        viewModel.onDeleteEntryClick(entry)
+        viewModel.onConfirmDeleteEntry()
+        advanceUntilIdle()
+
+        // The month and day go with it: a branch only exists for its entries.
+        assertTrue(viewModel.uiState.value.months.isEmpty())
     }
 
     private suspend fun logEntries(tagId: Long, vararg localDateTimes: String) {

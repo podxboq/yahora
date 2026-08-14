@@ -47,6 +47,11 @@
     <!-- Tag detail screen. -->
     <string name="action_back">Back</string>
     <string name="tag_detail_empty">No entries yet</string>
+    <string name="entry_menu_delete">Delete</string>
+    <string name="delete_entry_dialog_title">Delete this entry?</string>
+    <!-- %1$s is the time the entry was logged at. -->
+    <string name="delete_entry_dialog_text">It was logged at %1$s. This cannot be undone.</string>
+    <string name="action_delete">Delete</string>
     <string name="tag_detail_expand">Expand</string>
     <string name="tag_detail_collapse">Collapse</string>
     <!--

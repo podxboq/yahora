@@ -249,4 +249,28 @@ instrumented tests for what genuinely needs a device.
   fields on `Entry`. Keep the schema such that export can be added later
   without a migration.
 - App icon: adaptive icon with separate background/foreground layers, plus a
-  monochrome variant for Material You themed icons.
+  monochrome variant for Material You themed icons. The drawing is a tally of
+  five — three uprights and two diagonals — with the app's initial picked out
+  inside it rather than drawn on top: the lower half of the middle upright is
+  the Y's stem, the upper half of each diagonal a branch. Four things about it
+  are decisions, not accidents, and each is easy to "fix" into a regression:
+  - **The diagonals run all the way across.** A branch that dies on the mark it
+    crosses meets it at an open angle and the same weight; the eye joins them
+    into one down-up-down stroke and the icon reads as an M. Running through to
+    the opposite corner leaves nothing to fuse.
+  - **The Y is painted last**, after the diagonals' tails. Painted before them,
+    its crossing vertex takes the colour of the marks and the letter breaks at
+    exactly the point that identifies it.
+  - **The two figures differ in luminance, not merely in hue.** The first
+    attempt paired white marks with an amber Y at 1.44:1, which collapses into
+    a single stroke in greyscale and for several kinds of colour blindness.
+    Keep the ratio above 2:1. Same reasoning as the favourite star: never
+    colour alone.
+  - **The monochrome layer deliberately draws less** — the Y alone. Tinted flat,
+    the whole tally reads as neither a count nor a letter, and a flat tint is
+    exactly what that layer gets. The two layers are not meant to match.
+
+  Everything stays inside the 66dp safe circle of the 108dp canvas, *including*
+  the round caps, which extend each stroke by half its width past its endpoint.
+  Measuring the path endpoints alone is the classic way to ship an icon whose
+  tips get clipped by the launcher mask.

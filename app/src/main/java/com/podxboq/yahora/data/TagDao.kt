@@ -67,6 +67,17 @@ interface TagDao {
     suspend fun insert(tag: Tag): Long
 
     /**
+     * Flips the favorite flag in the database rather than writing a value read
+     * earlier, so two rapid taps cannot settle on a stale one. Nothing happens
+     * if the tag is gone.
+     *
+     * Favoriting never touches `name`, so ordering cannot shift as a side
+     * effect: the star is emphasis, not precedence.
+     */
+    @Query("UPDATE tags SET is_favorite = NOT is_favorite WHERE id = :id")
+    suspend fun toggleFavorite(id: Long)
+
+    /**
      * Deletes a tag. Fails if the tag still has entries — history is never
      * discarded as a side effect.
      *

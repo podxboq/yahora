@@ -130,7 +130,8 @@ These are easy to get wrong; the spec is deliberate about each one.
   size and weight, with no per-tag styling — not to a uniform chip width.
 - **Long press** opens a context menu: rename, toggle favorite, view entries,
   and delete tag (only when it has no entries). Inapplicable actions are
-  **omitted**, not greyed out. Only "toggle favorite" is still missing.
+  **omitted**, not greyed out. All four are built. Each item names what it will
+  do — "Mark as favorite" or "Remove from favorites" — not what the tag is.
 - **Which tags are deletable** comes from `SELECT DISTINCT tag_id FROM entries`,
   observed alongside the tags themselves, so a tap removes the delete action
   from that tag's menu at once. The UI hiding it is a courtesy; the foreign key

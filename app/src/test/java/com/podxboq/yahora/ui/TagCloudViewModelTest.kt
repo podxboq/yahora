@@ -407,6 +407,43 @@ class TagCloudViewModelTest {
         }
 
     @Test
+    fun `favoriting a tag marks it and closes the menu`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onTagLongClick(tag)
+        viewModel.onToggleFavorite(tag)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertTrue(state.tags.single().isFavorite)
+        assertNull(state.menuTagId)
+    }
+
+    @Test
+    fun `favoriting twice leaves the tag as it was`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onToggleFavorite(tag)
+        advanceUntilIdle()
+        viewModel.onToggleFavorite(viewModel.uiState.value.tags.single())
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.tags.single().isFavorite)
+    }
+
+    @Test
+    fun `a favorite keeps its alphabetical place`() = runTest(dispatcher) {
+        addTag("Coffee")
+        val water = addTag("Water")
+
+        viewModel.onToggleFavorite(water)
+        advanceUntilIdle()
+
+        // The star is emphasis, not precedence.
+        assertEquals(listOf("Coffee", "Water"), viewModel.uiState.value.tags.map { it.name })
+    }
+
+    @Test
     fun `tags are exposed alphabetically`() = runTest(dispatcher) {
         listOf("Water", "coffee", "Tea").forEach { name ->
             viewModel.onAddTagClick()

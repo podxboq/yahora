@@ -76,6 +76,13 @@ class TagRepository(private val tagDao: TagDao) {
     }
 
     /**
+     * Marks a tag as a favorite, or stops doing so. The flag only changes visual
+     * emphasis: it never reorders the cloud, and there is nothing to report back
+     * — the tags flow carries the new value.
+     */
+    suspend fun toggleFavorite(id: Long) = tagDao.toggleFavorite(id)
+
+    /**
      * Deletes a tag, provided it holds no entries. The foreign key is what
      * enforces that — the UI hides the action, but the guarantee lives in the
      * database, not in whatever the screen happened to know.

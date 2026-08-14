@@ -133,6 +133,12 @@ class TagCloudViewModel(
         _uiState.update { it.copy(menuTagId = null) }
     }
 
+    /** Stars a tag, or unstars it. Emphasis only: the cloud's order is untouched. */
+    fun onToggleFavorite(tag: Tag) {
+        onDismissMenu()
+        viewModelScope.launch { tagRepository.toggleFavorite(tag.id) }
+    }
+
     /**
      * Deletes a tag outright: no confirmation dialog, because a tag that can be
      * deleted at all holds no history to lose. The menu is closed first, since

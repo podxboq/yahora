@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -241,6 +242,36 @@ class TagRepositoryTest {
     @Test
     fun `deleting a tag that is already gone is not an error`() = runTest {
         assertEquals(DeleteTagResult.Deleted, repository.deleteTag(404))
+    }
+
+    @Test
+    fun `a tag can be made a favorite and back`() = runTest {
+        val id = createdId(repository.addTag("Coffee"))
+        assertFalse(repository.observeTags().first().single().isFavorite)
+
+        repository.toggleFavorite(id)
+        assertTrue(repository.observeTags().first().single().isFavorite)
+
+        repository.toggleFavorite(id)
+        assertFalse(repository.observeTags().first().single().isFavorite)
+    }
+
+    @Test
+    fun `favorites do not reorder the cloud`() = runTest {
+        repository.addTag("Coffee")
+        val water = createdId(repository.addTag("Water"))
+
+        repository.toggleFavorite(water)
+
+        // The star is emphasis, never precedence: sorting stays alphabetical.
+        assertEquals(listOf("Coffee", "Water"), repository.observeTags().first().map { it.name })
+    }
+
+    @Test
+    fun `favoriting a tag that is already gone does nothing`() = runTest {
+        repository.toggleFavorite(404)
+
+        assertTrue(repository.observeTags().first().isEmpty())
     }
 
     private fun createdId(result: AddTagResult): Long =

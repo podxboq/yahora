@@ -73,6 +73,39 @@ class TagDaoTest {
     }
 
     @Test
+    fun `the favorite flag flips back and forth`() = runTest {
+        val id = dao.insert(Tag(name = "Coffee"))
+
+        dao.toggleFavorite(id)
+        assertEquals(true, dao.findById(id)?.isFavorite)
+
+        dao.toggleFavorite(id)
+        assertEquals(false, dao.findById(id)?.isFavorite)
+    }
+
+    @Test
+    fun `flipping the favorite flag leaves the name and its key alone`() = runTest {
+        val id = dao.insert(Tag(name = "Coffee"))
+        val before = dao.findById(id)
+
+        dao.toggleFavorite(id)
+
+        val after = dao.findById(id)
+        assertEquals(before?.name, after?.name)
+        assertEquals(before?.nameKey, after?.nameKey)
+    }
+
+    @Test
+    fun `flipping one tag's favorite flag leaves the others alone`() = runTest {
+        val coffee = dao.insert(Tag(name = "Coffee"))
+        val tea = dao.insert(Tag(name = "Tea", isFavorite = true))
+
+        dao.toggleFavorite(coffee)
+
+        assertEquals(true, dao.findById(tea)?.isFavorite)
+    }
+
+    @Test
     fun `tag name that differs only in case is rejected`() = runTest {
         dao.insert(Tag(name = "Coffee"))
 

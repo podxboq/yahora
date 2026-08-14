@@ -92,6 +92,7 @@ data class TagCloudCallbacks(
     val onConfirmRename: () -> Unit,
     val onDismissRenameDialog: () -> Unit,
     val onDeleteClick: (Tag) -> Unit,
+    val onToggleFavorite: (Tag) -> Unit,
 )
 
 @Composable
@@ -127,6 +128,7 @@ fun TagCloudScreen(
             onConfirmRename = viewModel::onConfirmRename,
             onDismissRenameDialog = viewModel::onDismissRenameDialog,
             onDeleteClick = viewModel::onDeleteClick,
+            onToggleFavorite = viewModel::onToggleFavorite,
         ),
         modifier = modifier,
     )
@@ -293,6 +295,21 @@ private fun TagChip(
                 text = { Text(stringResource(R.string.tag_menu_rename)) },
                 onClick = { callbacks.onRenameClick(tag) },
             )
+            DropdownMenuItem(
+                // The item names what it will do, not what the tag is now.
+                text = {
+                    Text(
+                        stringResource(
+                            if (tag.isFavorite) {
+                                R.string.tag_menu_unfavorite
+                            } else {
+                                R.string.tag_menu_favorite
+                            },
+                        ),
+                    )
+                },
+                onClick = { callbacks.onToggleFavorite(tag) },
+            )
             // A tag with history cannot be deleted, so the action is left out
             // rather than shown greyed out.
             if (canDelete) {
@@ -399,7 +416,7 @@ private fun TagCloudContentPreview() {
             state = TagCloudUiState(
                 tags = listOf(Tag(id = 1, name = "Coffee"), Tag(id = 2, name = "Medication")),
             ),
-            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
+            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
         )
     }
 }

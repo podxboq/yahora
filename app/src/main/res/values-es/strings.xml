@@ -23,6 +23,8 @@
     <string name="tag_menu_view_entries">Ver registros</string>
     <string name="tag_menu_rename">Renombrar</string>
     <string name="tag_menu_delete">Borrar</string>
+    <string name="tag_menu_favorite">Marcar como favorita</string>
+    <string name="tag_menu_unfavorite">Quitar de favoritas</string>
 
     <string name="rename_tag_dialog_title">Renombrar %1$s</string>
     <string name="action_rename">Renombrar</string>

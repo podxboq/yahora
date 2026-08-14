@@ -342,6 +342,37 @@ class TagCloudContentTest {
         composeRule.onNodeWithText("Rename").assertIsDisplayed()
     }
 
+    @Test
+    fun `the context menu offers starring a plain tag`() {
+        var starred: Tag? = null
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee), menuTagId = coffee.id),
+                callbacks = noopCallbacks.copy(onToggleFavorite = { starred = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Mark as favorite").performClick()
+
+        assert(starred == coffee) { "Expected the favorite action to report the tag, was $starred" }
+    }
+
+    @Test
+    fun `the context menu offers unstarring a favorite`() {
+        val coffee = Tag(id = 1, name = "Coffee", isFavorite = true)
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee), menuTagId = coffee.id),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        // The action names what it will do, not what the tag currently is.
+        composeRule.onNodeWithText("Remove from favorites").assertIsDisplayed()
+        composeRule.onNodeWithText("Mark as favorite").assertDoesNotExist()
+    }
+
     private val noopCallbacks = TagCloudCallbacks(
         onAddTagClick = {},
         onDraftNameChange = {},
@@ -355,5 +386,6 @@ class TagCloudContentTest {
         onConfirmRename = {},
         onDismissRenameDialog = {},
         onDeleteClick = {},
+        onToggleFavorite = {},
     )
 }

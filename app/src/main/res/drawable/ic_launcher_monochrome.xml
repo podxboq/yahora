@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Monochrome layer for Material You themed icons (Android 13+). The system tints
+  it with a single colour, so it deliberately draws less than the foreground:
+  the Y alone, without the uprights or the diagonals' tails.
+
+  This is not an oversight. The whole tally was rendered flat and it reads as
+  neither a count nor a letter — just a knot of five strokes. What separates the
+  two figures in the foreground is colour, and colour is exactly what this layer
+  does not get. Keeping the protagonist costs the count in themed mode and saves
+  the figure.
+
+  Same 38° branch angle as the foreground, so both layers are the same letter,
+  but recentred: the foreground's stem hangs low because it doubles as the third
+  mark, which alone would sit off balance. Stroke and a half heavier, because a
+  themed icon is tinted onto a low-contrast background and thin strokes vanish
+  there. Furthest point from centre, round caps included: 32.9 of the 33dp safe
+  radius.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:pathData="M54,76 L54,52"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7.5"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent" />
+
+    <path
+        android:pathData="M54,52 L32,34.8 M54,52 L76,34.8"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="7.5"
+        android:strokeLineCap="round"
+        android:fillColor="@android:color/transparent" />
+</vector>

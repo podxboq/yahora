@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Bare platform theme, used only for the window before Compose takes over in
+  MainActivity. All real theming lives in ui/theme/Theme.kt (Material 3).
+  The dark counterpart is in values-night/themes.xml.
+-->
+<resources>
+    <style name="Theme.Yahora" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>

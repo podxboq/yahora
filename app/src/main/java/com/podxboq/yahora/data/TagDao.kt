@@ -20,6 +20,7 @@ package com.podxboq.yahora.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -45,6 +46,19 @@ interface TagDao {
     @Query("SELECT * FROM tags WHERE name_key = :nameKey LIMIT 1")
     suspend fun findByNameKey(nameKey: String): Tag?
 
+    @Query("SELECT * FROM tags WHERE id = :id LIMIT 1")
+    suspend fun findById(id: Long): Tag?
+
+    /**
+     * Rewrites a tag in place. Prefer [renameTo] over calling this with a
+     * hand-built [Tag]: `copy` would carry the old `name_key` along, and a key
+     * that lags behind its name keeps the old name reserved for ever.
+     *
+     * @throws android.database.sqlite.SQLiteConstraintException on a duplicate.
+     */
+    @Update
+    suspend fun update(tag: Tag)
+
     /**
      * Inserts a tag, aborting if another tag already uses the same name.
      * @throws android.database.sqlite.SQLiteConstraintException on a duplicate.
@@ -65,3 +79,10 @@ interface TagDao {
 /** Looks a tag up by a raw, user-typed name. */
 suspend fun TagDao.findByName(rawName: String): Tag? =
     findByNameKey(TagName.normalize(rawName))
+
+/**
+ * Renames [tag], rebuilding it so the derived `name_key` is computed afresh
+ * from the new name instead of being copied from the old one.
+ */
+suspend fun TagDao.renameTo(tag: Tag, name: String) =
+    update(Tag(id = tag.id, name = name, isFavorite = tag.isFavorite))

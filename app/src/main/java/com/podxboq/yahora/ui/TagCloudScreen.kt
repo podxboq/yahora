@@ -88,6 +88,9 @@ data class TagCloudCallbacks(
     val onTagLongClick: (Tag) -> Unit,
     val onDismissMenu: () -> Unit,
     val onViewEntries: (Tag) -> Unit,
+    val onRenameClick: (Tag) -> Unit,
+    val onConfirmRename: () -> Unit,
+    val onDismissRenameDialog: () -> Unit,
 )
 
 @Composable
@@ -119,6 +122,9 @@ fun TagCloudScreen(
                 viewModel.onDismissMenu()
                 onOpenTagDetail(tag)
             },
+            onRenameClick = viewModel::onRenameClick,
+            onConfirmRename = viewModel::onConfirmRename,
+            onDismissRenameDialog = viewModel::onDismissRenameDialog,
         ),
         modifier = modifier,
     )
@@ -133,6 +139,8 @@ private fun TagCloudMessage.toText(context: Context): String = when (this) {
     )
 
     is TagCloudMessage.EntryFailed -> context.getString(R.string.entry_failed, tagName)
+
+    is TagCloudMessage.RenameFailed -> context.getString(R.string.rename_failed, tagName)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -175,7 +183,26 @@ fun TagCloudContent(
     }
 
     if (state.isAddDialogVisible) {
-        AddTagDialog(state = state, callbacks = callbacks)
+        TagNameDialog(
+            title = stringResource(R.string.add_tag_dialog_title),
+            confirmLabel = stringResource(R.string.action_create),
+            state = state,
+            onConfirm = callbacks.onConfirmAddTag,
+            onDismiss = callbacks.onDismissAddDialog,
+            onDraftNameChange = callbacks.onDraftNameChange,
+        )
+    }
+
+    // Only ever one of the two: renaming and creating share the draft name.
+    state.renamingTag?.let { tag ->
+        TagNameDialog(
+            title = stringResource(R.string.rename_tag_dialog_title, tag.name),
+            confirmLabel = stringResource(R.string.action_rename),
+            state = state,
+            onConfirm = callbacks.onConfirmRename,
+            onDismiss = callbacks.onDismissRenameDialog,
+            onDraftNameChange = callbacks.onDraftNameChange,
+        )
     }
 }
 
@@ -252,6 +279,10 @@ private fun TagChip(tag: Tag, isMenuOpen: Boolean, callbacks: TagCloudCallbacks)
                 text = { Text(stringResource(R.string.tag_menu_view_entries)) },
                 onClick = { callbacks.onViewEntries(tag) },
             )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.tag_menu_rename)) },
+                onClick = { callbacks.onRenameClick(tag) },
+            )
         }
     }
 }
@@ -281,15 +312,26 @@ private fun EmptyTagCloud(modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Naming a tag, whether it is being created or renamed: same field, same limit,
+ * same errors. Only the title and the confirm label tell the two apart.
+ */
 @Composable
-private fun AddTagDialog(state: TagCloudUiState, callbacks: TagCloudCallbacks) {
+private fun TagNameDialog(
+    title: String,
+    confirmLabel: String,
+    state: TagCloudUiState,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    onDraftNameChange: (String) -> Unit,
+) {
     AlertDialog(
-        onDismissRequest = callbacks.onDismissAddDialog,
-        title = { Text(stringResource(R.string.add_tag_dialog_title)) },
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
         text = {
             OutlinedTextField(
                 value = state.draftName,
-                onValueChange = callbacks.onDraftNameChange,
+                onValueChange = onDraftNameChange,
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.tag_name_label)) },
                 singleLine = true,
@@ -298,12 +340,10 @@ private fun AddTagDialog(state: TagCloudUiState, callbacks: TagCloudCallbacks) {
             )
         },
         confirmButton = {
-            TextButton(onClick = callbacks.onConfirmAddTag) {
-                Text(stringResource(R.string.action_create))
-            }
+            TextButton(onClick = onConfirm) { Text(confirmLabel) }
         },
         dismissButton = {
-            TextButton(onClick = callbacks.onDismissAddDialog) {
+            TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.action_cancel))
             }
         },
@@ -341,7 +381,7 @@ private fun TagCloudContentPreview() {
             state = TagCloudUiState(
                 tags = listOf(Tag(id = 1, name = "Coffee"), Tag(id = 2, name = "Medication")),
             ),
-            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}),
+            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
         )
     }
 }

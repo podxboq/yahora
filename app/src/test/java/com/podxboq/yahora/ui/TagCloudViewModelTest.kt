@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -253,6 +254,106 @@ class TagCloudViewModelTest {
     }
 
     @Test
+    fun `renaming starts from the current name and closes the menu`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onTagLongClick(tag)
+        viewModel.onRenameClick(tag)
+
+        val state = viewModel.uiState.value
+        assertEquals(tag.id, state.renamingTagId)
+        assertEquals("Coffee", state.draftName)
+        assertNull(state.menuTagId)
+        assertNull(state.nameError)
+    }
+
+    @Test
+    fun `confirming a rename replaces the name and closes the dialog`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onRenameClick(tag)
+        viewModel.onDraftNameChange("Morning coffee")
+        viewModel.onConfirmRename()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.renamingTagId)
+        assertNull(state.nameError)
+        assertEquals(listOf("Morning coffee"), state.tags.map { it.name })
+    }
+
+    @Test
+    fun `renaming onto another tag's name keeps the dialog open`() = runTest(dispatcher) {
+        val coffee = addTag("Coffee")
+        addTag("Tea")
+
+        viewModel.onRenameClick(coffee)
+        viewModel.onDraftNameChange("tea")
+        viewModel.onConfirmRename()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(coffee.id, state.renamingTagId)
+        assertEquals(TagNameError.DUPLICATE, state.nameError)
+        assertEquals(listOf("Coffee", "Tea"), state.tags.map { it.name })
+    }
+
+    @Test
+    fun `renaming to a blank name reports the error`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onRenameClick(tag)
+        viewModel.onDraftNameChange("   ")
+        viewModel.onConfirmRename()
+        advanceUntilIdle()
+
+        assertEquals(TagNameError.BLANK, viewModel.uiState.value.nameError)
+        assertEquals(listOf("Coffee"), viewModel.uiState.value.tags.map { it.name })
+    }
+
+    @Test
+    fun `dismissing the rename dialog leaves the name alone`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onRenameClick(tag)
+        viewModel.onDraftNameChange("Tea")
+        viewModel.onDismissRenameDialog()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.renamingTagId)
+        assertEquals("", state.draftName)
+        assertEquals(listOf("Coffee"), state.tags.map { it.name })
+    }
+
+    @Test
+    fun `renaming a tag that no longer exists announces the failure`() = runTest(dispatcher) {
+        val ghost = Tag(id = 404, name = "Ghost")
+
+        viewModel.onRenameClick(ghost)
+        viewModel.onDraftNameChange("Coffee")
+        viewModel.onConfirmRename()
+        advanceUntilIdle()
+
+        assertEquals(TagCloudMessage.RenameFailed(tagName = "Ghost"), viewModel.messages.first())
+        assertNull(viewModel.uiState.value.renamingTagId)
+    }
+
+    @Test
+    fun `a renamed tag takes its new place in the cloud`() = runTest(dispatcher) {
+        addTag("Coffee")
+        val water = addTag("Water")
+
+        viewModel.onRenameClick(water)
+        viewModel.onDraftNameChange("Ache")
+        viewModel.onConfirmRename()
+        advanceUntilIdle()
+
+        // Sorting is alphabetical and nothing pins a tag to where it was.
+        assertEquals(listOf("Ache", "Coffee"), viewModel.uiState.value.tags.map { it.name })
+    }
+
+    @Test
     fun `tags are exposed alphabetically`() = runTest(dispatcher) {
         listOf("Water", "coffee", "Tea").forEach { name ->
             viewModel.onAddTagClick()
@@ -265,6 +366,15 @@ class TagCloudViewModelTest {
             listOf("coffee", "Tea", "Water"),
             viewModel.uiState.value.tags.map { it.name },
         )
+    }
+
+    /** Creates a tag through the ViewModel and hands back the stored one. */
+    private fun TestScope.addTag(name: String): Tag {
+        viewModel.onAddTagClick()
+        viewModel.onDraftNameChange(name)
+        viewModel.onConfirmAddTag()
+        advanceUntilIdle()
+        return viewModel.uiState.value.tags.single { it.name == name }
     }
 
     private companion object {

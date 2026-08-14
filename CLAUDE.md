@@ -130,7 +130,12 @@ These are easy to get wrong; the spec is deliberate about each one.
   size and weight, with no per-tag styling — not to a uniform chip width.
 - **Long press** opens a context menu: rename, toggle favorite, view entries,
   and delete tag (only when it has no entries). Inapplicable actions are
-  **omitted**, not greyed out. Only "view entries" is built so far.
+  **omitted**, not greyed out. "View entries" and "rename" are built so far.
+- **Renaming** reuses the creation dialog — same field, same 128 code point cap,
+  same errors — prefilled with the current name. A tag never collides with
+  itself, so recapitalizing "coffee" to "Coffee" must go through; the duplicate
+  check compares ids, not just keys. The renamed tag keeps its id, its favorite
+  flag and its entries, and simply takes its new alphabetical place.
 - **Viewing entries** opens the tag's own screen: its name as the title and its
   history as a collapsible tree — months, then days, then the entries
   themselves at `HH:mm:ss`. Branches state how many children they hold (a month

@@ -28,6 +28,17 @@ sealed interface AddTagResult {
     data object NameTooLong : AddTagResult
 }
 
+/** Outcome of trying to rename a tag. */
+sealed interface RenameTagResult {
+    data object Renamed : RenameTagResult
+    data object DuplicateName : RenameTagResult
+    data object BlankName : RenameTagResult
+    data object NameTooLong : RenameTagResult
+
+    /** The tag was deleted between the menu opening and the rename landing. */
+    data object TagNotFound : RenameTagResult
+}
+
 class TagRepository(private val tagDao: TagDao) {
 
     fun observeTags(): Flow<List<Tag>> = tagDao.observeAll()
@@ -52,6 +63,29 @@ class TagRepository(private val tagDao: TagDao) {
             // The unique index is the real guard: it also covers the race where
             // the same name is inserted between the check above and this insert.
             AddTagResult.DuplicateName
+        }
+    }
+
+    /**
+     * Gives an existing tag a new name, under the same rules that govern
+     * creating one. The tag keeps its id, its favorite flag and all its
+     * entries — only the name and the key derived from it change.
+     */
+    suspend fun renameTag(id: Long, rawName: String): RenameTagResult {
+        val tag = tagDao.findById(id) ?: return RenameTagResult.TagNotFound
+        val name = rawName.trim()
+        if (name.isEmpty()) return RenameTagResult.BlankName
+        if (TagName.lengthOf(name) > TagName.MAX_LENGTH) return RenameTagResult.NameTooLong
+        // A tag never collides with itself: recapitalizing "coffee" to "Coffee"
+        // leaves the key untouched and must go through.
+        val clash = tagDao.findByName(name)
+        if (clash != null && clash.id != id) return RenameTagResult.DuplicateName
+
+        return try {
+            tagDao.renameTo(tag, name)
+            RenameTagResult.Renamed
+        } catch (_: SQLiteConstraintException) {
+            RenameTagResult.DuplicateName
         }
     }
 }

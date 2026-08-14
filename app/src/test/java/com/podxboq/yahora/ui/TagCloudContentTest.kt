@@ -242,6 +242,69 @@ class TagCloudContentTest {
         composeRule.onAllNodesWithText("View entries").assertCountEquals(1)
     }
 
+    @Test
+    fun `the context menu offers renaming the tag`() {
+        var renaming: Tag? = null
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee), menuTagId = coffee.id),
+                callbacks = noopCallbacks.copy(onRenameClick = { renaming = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Rename").performClick()
+
+        assert(renaming == coffee) { "Expected the rename action to report the tag, was $renaming" }
+    }
+
+    @Test
+    fun `the rename dialog opens on the current name`() {
+        var confirmed = false
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(renamingTag = coffee, draftName = "Coffee"),
+                callbacks = noopCallbacks.copy(onConfirmRename = { confirmed = true }),
+            )
+        }
+
+        composeRule.onNodeWithText("Rename Coffee").assertIsDisplayed()
+        composeRule.onNodeWithText("Coffee").assertIsDisplayed()
+
+        composeRule.onNodeWithText("Rename", substring = false).performClick()
+
+        assert(confirmed) { "Expected the rename to be confirmed" }
+    }
+
+    @Test
+    fun `the rename dialog reports a duplicate name`() {
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    renamingTag = Tag(id = 1, name = "Coffee"),
+                    draftName = "Tea",
+                    nameError = TagNameError.DUPLICATE,
+                ),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("A tag with that name already exists").assertIsDisplayed()
+    }
+
+    @Test
+    fun `no rename dialog until a tag is being renamed`() {
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(Tag(id = 1, name = "Coffee"))),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("Rename Coffee").assertDoesNotExist()
+    }
+
     private val noopCallbacks = TagCloudCallbacks(
         onAddTagClick = {},
         onDraftNameChange = {},
@@ -251,5 +314,8 @@ class TagCloudContentTest {
         onTagLongClick = {},
         onDismissMenu = {},
         onViewEntries = {},
+        onRenameClick = {},
+        onConfirmRename = {},
+        onDismissRenameDialog = {},
     )
 }

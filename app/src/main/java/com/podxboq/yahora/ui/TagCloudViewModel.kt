@@ -23,6 +23,7 @@ import androidx.lifecycle.viewModelScope
 import com.podxboq.yahora.data.AddTagResult
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.LogEntryResult
+import com.podxboq.yahora.data.RenameTagResult
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.data.TagRepository
@@ -49,7 +50,15 @@ data class TagCloudUiState(
     val nameError: TagNameError? = null,
     /** The tag whose context menu is open, if any. */
     val menuTagId: Long? = null,
-)
+    /**
+     * The tag being renamed, if any. It shares [draftName] with the add dialog,
+     * since only one of the two can be on screen at a time, and it is kept whole
+     * so a failure can still name the tag the user was editing.
+     */
+    val renamingTag: Tag? = null,
+) {
+    val renamingTagId: Long? get() = renamingTag?.id
+}
 
 /**
  * A one-shot announcement for the user, shown and forgotten. Kept out of
@@ -58,6 +67,7 @@ data class TagCloudUiState(
 sealed interface TagCloudMessage {
     data class EntryLogged(val tagName: String, val timestamp: Long) : TagCloudMessage
     data class EntryFailed(val tagName: String) : TagCloudMessage
+    data class RenameFailed(val tagName: String) : TagCloudMessage
 }
 
 class TagCloudViewModel(
@@ -106,6 +116,48 @@ class TagCloudViewModel(
 
     fun onDismissMenu() {
         _uiState.update { it.copy(menuTagId = null) }
+    }
+
+    /** Opens the rename dialog on the name the tag has now, ready to be edited. */
+    fun onRenameClick(tag: Tag) {
+        _uiState.update {
+            it.copy(
+                menuTagId = null,
+                renamingTag = tag,
+                draftName = tag.name,
+                nameError = null,
+            )
+        }
+    }
+
+    fun onDismissRenameDialog() {
+        _uiState.update { it.copy(renamingTag = null, draftName = "", nameError = null) }
+    }
+
+    fun onConfirmRename() {
+        val tag = _uiState.value.renamingTag ?: return
+        val name = _uiState.value.draftName
+        viewModelScope.launch {
+            when (tagRepository.renameTag(tag.id, name)) {
+                RenameTagResult.Renamed -> onDismissRenameDialog()
+
+                RenameTagResult.DuplicateName ->
+                    _uiState.update { it.copy(nameError = TagNameError.DUPLICATE) }
+
+                RenameTagResult.BlankName ->
+                    _uiState.update { it.copy(nameError = TagNameError.BLANK) }
+
+                RenameTagResult.NameTooLong ->
+                    _uiState.update { it.copy(nameError = TagNameError.TOO_LONG) }
+
+                // Nothing left to edit: report it and close rather than leaving
+                // a dialog that can never succeed.
+                RenameTagResult.TagNotFound -> {
+                    onDismissRenameDialog()
+                    _messages.send(TagCloudMessage.RenameFailed(tag.name))
+                }
+            }
+        }
     }
 
     fun onAddTagClick() {

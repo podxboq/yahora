@@ -28,8 +28,15 @@
     <string name="entry_logged">%1$s logged at %2$s</string>
     <string name="entry_failed">Could not log %1$s: that tag no longer exists</string>
 
+    <string name="rename_failed">Could not rename %1$s: that tag no longer exists</string>
+
     <!-- Long-press context menu. -->
     <string name="tag_menu_view_entries">View entries</string>
+    <string name="tag_menu_rename">Rename</string>
+
+    <!-- %1$s is the tag's current name. -->
+    <string name="rename_tag_dialog_title">Rename %1$s</string>
+    <string name="action_rename">Rename</string>
 
     <!-- Tag detail screen. -->
     <string name="action_back">Back</string>

@@ -54,6 +54,7 @@ class TagDetailViewModel(
     tagRepository: TagRepository,
     private val entryRepository: EntryRepository,
     zone: ZoneId = ZoneId.systemDefault(),
+    private val now: () -> Long = System::currentTimeMillis,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagDetailUiState())
@@ -91,10 +92,23 @@ class TagDetailViewModel(
         }
     }
 
-    /** A long press on an entry offers what can be done to it. */
+    /**
+     * A long press on an entry offers what can be done to it — which, once the
+     * deletion window has passed, is nothing at all, so no menu opens.
+     */
     fun onEntryLongClick(node: TimeNode) {
+        if (!isDeletable(node)) return
         _uiState.update { it.copy(menuEntryId = node.entry.id) }
     }
+
+    /**
+     * Deleting is for slips of the finger — a chip tapped twice, or the one next
+     * to the intended one — and those are noticed within seconds. Entries are
+     * never edited, so [Entry.timestamp] is also when the entry was created, and
+     * the window can be measured straight from it.
+     */
+    private fun isDeletable(node: TimeNode): Boolean =
+        now() - node.entry.timestamp <= DELETE_WINDOW_MILLIS
 
     fun onDismissEntryMenu() {
         _uiState.update { it.copy(menuEntryId = null) }
@@ -114,6 +128,11 @@ class TagDetailViewModel(
 
     fun onConfirmDeleteEntry() {
         val node = _uiState.value.entryPendingDeletion ?: return
+        // Checked again here: the dialog may have sat open past the window.
+        if (!isDeletable(node)) {
+            onDismissDeleteEntry()
+            return
+        }
         viewModelScope.launch {
             entryRepository.deleteEntry(node.entry.id)
             _uiState.update { it.copy(entryPendingDeletion = null) }
@@ -121,6 +140,13 @@ class TagDetailViewModel(
     }
 
     companion object {
+        /**
+         * How long an entry stays deletable. Long enough to catch a mistaken tap
+         * on the way to pocketing the phone, short enough that history cannot be
+         * tidied up after the fact.
+         */
+        const val DELETE_WINDOW_MILLIS = 5 * 60 * 1000L
+
         fun factory(
             tagId: Long,
             tagRepository: TagRepository,

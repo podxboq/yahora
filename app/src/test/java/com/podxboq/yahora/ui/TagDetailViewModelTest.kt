@@ -154,7 +154,7 @@ class TagDetailViewModelTest {
     }
 
     @Test
-    fun `long pressing an entry opens its menu`() = runTest(dispatcher) {
+    fun `long pressing a fresh entry opens its menu`() = runTest(dispatcher) {
         val tagId = database.tagDao().insert(Tag(name = "Coffee"))
         logEntries(tagId, "2026-08-14T09:15:30")
         val viewModel = viewModelFor(tagId)
@@ -164,6 +164,56 @@ class TagDetailViewModelTest {
         viewModel.onEntryLongClick(entry)
 
         assertEquals(entry.entry.id, viewModel.uiState.value.menuEntryId)
+    }
+
+    @Test
+    fun `long pressing an entry past the window opens nothing`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val entry = viewModel.uiState.value.months.single().days.single().times.single()
+
+        now = at("2026-08-14T09:20:31")
+
+        // Deleting is for slips of the finger, which are noticed at once. Past
+        // the window there is nothing on offer, so no menu opens.
+        viewModel.onEntryLongClick(entry)
+
+        assertNull(viewModel.uiState.value.menuEntryId)
+    }
+
+    @Test
+    fun `the window is open right up to its edge`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val entry = viewModel.uiState.value.months.single().days.single().times.single()
+
+        now = at("2026-08-14T09:20:30")
+
+        viewModel.onEntryLongClick(entry)
+
+        assertEquals(entry.entry.id, viewModel.uiState.value.menuEntryId)
+    }
+
+    @Test
+    fun `an entry that ages out while the dialog is up is not deleted`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+        val entry = viewModel.uiState.value.months.single().days.single().times.single()
+        viewModel.onDeleteEntryClick(entry)
+
+        // The confirmation was opened in time but sat there too long.
+        now = at("2026-08-14T09:21:00")
+        viewModel.onConfirmDeleteEntry()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.entryPendingDeletion)
+        assertEquals(1, database.entryDao().countForTag(tagId))
     }
 
     @Test
@@ -194,6 +244,7 @@ class TagDetailViewModelTest {
         advanceUntilIdle()
         val day = viewModel.uiState.value.months.single().days.single()
         val newest = day.times.first()
+        now = at("2026-08-14T18:00:05")
 
         viewModel.onDeleteEntryClick(newest)
         viewModel.onConfirmDeleteEntry()
@@ -258,5 +309,12 @@ class TagDetailViewModelTest {
         entryRepository = EntryRepository(database.entryDao()),
         // Pinned so grouping never depends on where the test machine sits.
         zone = ZoneOffset.UTC,
+        now = { now },
     )
+
+    /** Moved by the tests to walk past the deletion window. */
+    private var now = at("2026-08-14T09:15:30")
+
+    private fun at(localDateTime: String): Long =
+        LocalDateTime.parse(localDateTime).toInstant(ZoneOffset.UTC).toEpochMilli()
 }

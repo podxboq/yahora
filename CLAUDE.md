@@ -165,9 +165,20 @@ These are easy to get wrong; the spec is deliberate about each one.
   a tag (only possible when empty) does **not** — no history is lost. The entry
   is reached by **long pressing its row** in the tree, the same gesture that
   opens a chip's menu; a swipe would promise an immediacy the mandatory
-  confirmation then takes back. The short tap on an entry is deliberately left
-  free: editing its timestamp is what will claim it.
-- Entry timestamps are editable after the fact.
+  confirmation then takes back. The short tap on an entry does nothing.
+- **Entry timestamps are not editable.** This is a decision, not a gap. What the
+  app measures is *how many times* something happened; the timestamp is how
+  those occurrences are grouped and ordered, not a figure the user is meant to
+  curate. An editor would be the shortest path to rewriting the record, and it
+  would buy accuracy in a dimension that is not the point. Do not add editing
+  back without the owner asking for it.
+- **Deleting an entry is for slips of the finger** — a chip tapped twice, the
+  chip next to the intended one — and those are noticed within seconds. So the
+  action is offered for `DELETE_WINDOW` after the entry was logged and then
+  withdrawn: a long press on an older entry opens nothing. The snackbar's undo
+  covers the first few seconds; this covers noticing on the way to pocketing the
+  phone. Because entries are never edited, `timestamp` is also the moment of
+  creation, so the window needs no extra column to measure from.
 
 ## Animation criteria
 

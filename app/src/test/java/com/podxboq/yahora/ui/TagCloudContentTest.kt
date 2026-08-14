@@ -305,6 +305,43 @@ class TagCloudContentTest {
         composeRule.onNodeWithText("Rename Coffee").assertDoesNotExist()
     }
 
+    @Test
+    fun `the context menu offers deleting a tag with no entries`() {
+        var deleted: Tag? = null
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee), menuTagId = coffee.id),
+                callbacks = noopCallbacks.copy(onDeleteClick = { deleted = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Delete").performClick()
+
+        assert(deleted == coffee) { "Expected the delete action to report the tag, was $deleted" }
+        // Nothing is lost, so nothing is confirmed.
+        composeRule.onNodeWithText("Cancel").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the context menu omits deleting a tag that has entries`() {
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    tags = listOf(coffee),
+                    menuTagId = coffee.id,
+                    tagIdsWithEntries = setOf(coffee.id),
+                ),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        // Omitted, never greyed out.
+        composeRule.onNodeWithText("Delete").assertDoesNotExist()
+        composeRule.onNodeWithText("Rename").assertIsDisplayed()
+    }
+
     private val noopCallbacks = TagCloudCallbacks(
         onAddTagClick = {},
         onDraftNameChange = {},
@@ -317,5 +354,6 @@ class TagCloudContentTest {
         onRenameClick = {},
         onConfirmRename = {},
         onDismissRenameDialog = {},
+        onDeleteClick = {},
     )
 }

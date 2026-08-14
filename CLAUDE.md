@@ -130,7 +130,12 @@ These are easy to get wrong; the spec is deliberate about each one.
   size and weight, with no per-tag styling — not to a uniform chip width.
 - **Long press** opens a context menu: rename, toggle favorite, view entries,
   and delete tag (only when it has no entries). Inapplicable actions are
-  **omitted**, not greyed out. "View entries" and "rename" are built so far.
+  **omitted**, not greyed out. Only "toggle favorite" is still missing.
+- **Which tags are deletable** comes from `SELECT DISTINCT tag_id FROM entries`,
+  observed alongside the tags themselves, so a tap removes the delete action
+  from that tag's menu at once. The UI hiding it is a courtesy; the foreign key
+  is the guarantee, and the repository still handles the refusal that arrives
+  when an entry lands while the menu is open.
 - **Renaming** reuses the creation dialog — same field, same 128 code point cap,
   same errors — prefilled with the current name. A tag never collides with
   itself, so recapitalizing "coffee" to "Coffee" must go through; the duplicate

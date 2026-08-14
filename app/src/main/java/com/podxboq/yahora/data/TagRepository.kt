@@ -28,6 +28,15 @@ sealed interface AddTagResult {
     data object NameTooLong : AddTagResult
 }
 
+/** Outcome of trying to delete a tag. */
+sealed interface DeleteTagResult {
+    /** The tag is gone — including when it already was. */
+    data object Deleted : DeleteTagResult
+
+    /** It still holds entries, so the database refused: history outlives tags. */
+    data object HasEntries : DeleteTagResult
+}
+
 /** Outcome of trying to rename a tag. */
 sealed interface RenameTagResult {
     data object Renamed : RenameTagResult
@@ -65,6 +74,19 @@ class TagRepository(private val tagDao: TagDao) {
             AddTagResult.DuplicateName
         }
     }
+
+    /**
+     * Deletes a tag, provided it holds no entries. The foreign key is what
+     * enforces that — the UI hides the action, but the guarantee lives in the
+     * database, not in whatever the screen happened to know.
+     */
+    suspend fun deleteTag(id: Long): DeleteTagResult =
+        try {
+            tagDao.deleteById(id)
+            DeleteTagResult.Deleted
+        } catch (_: SQLiteConstraintException) {
+            DeleteTagResult.HasEntries
+        }
 
     /**
      * Gives an existing tag a new name, under the same rules that govern

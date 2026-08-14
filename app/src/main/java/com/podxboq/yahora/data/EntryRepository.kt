@@ -39,6 +39,9 @@ class EntryRepository(
 
     fun observeEntriesForTag(tagId: Long): Flow<List<Entry>> = entryDao.observeForTag(tagId)
 
+    /** The tags that hold at least one entry, and so cannot be deleted. */
+    fun observeTagIdsWithEntries(): Flow<List<Long>> = entryDao.observeTagIdsWithEntries()
+
     suspend fun logEntry(tagId: Long): LogEntryResult {
         val timestamp = now()
         return try {

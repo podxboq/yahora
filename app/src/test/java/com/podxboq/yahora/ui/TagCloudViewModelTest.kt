@@ -18,6 +18,7 @@
 package com.podxboq.yahora.ui
 
 import androidx.room.Room
+import com.podxboq.yahora.data.Entry
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagName
@@ -352,6 +353,58 @@ class TagCloudViewModelTest {
         // Sorting is alphabetical and nothing pins a tag to where it was.
         assertEquals(listOf("Ache", "Coffee"), viewModel.uiState.value.tags.map { it.name })
     }
+
+    @Test
+    fun `a tag with no entries can be deleted`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        assertTrue(viewModel.uiState.value.canDelete(tag.id))
+    }
+
+    @Test
+    fun `logging an entry makes a tag undeletable straight away`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.canDelete(tag.id))
+    }
+
+    @Test
+    fun `deleting a tag removes it and closes the menu`() = runTest(dispatcher) {
+        val coffee = addTag("Coffee")
+        addTag("Tea")
+
+        viewModel.onTagLongClick(coffee)
+        viewModel.onDeleteClick(coffee)
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(listOf("Tea"), state.tags.map { it.name })
+        assertNull(state.menuTagId)
+    }
+
+    @Test
+    fun `deleting a tag that has entries announces the failure and keeps it`() =
+        runTest(dispatcher) {
+            val tag = addTag("Coffee")
+            // Straight through the DAO: a tap would queue a message of its own
+            // ahead of the one under test.
+            database.entryDao().insert(Entry(tagId = tag.id, timestamp = NOW))
+            advanceUntilIdle()
+
+            // The menu hides the action, but a tap could have landed since it
+            // opened: the database is what actually refuses.
+            viewModel.onDeleteClick(tag)
+            advanceUntilIdle()
+
+            assertEquals(
+                TagCloudMessage.DeleteFailed(tagName = "Coffee"),
+                viewModel.messages.first(),
+            )
+            assertEquals(listOf("Coffee"), viewModel.uiState.value.tags.map { it.name })
+        }
 
     @Test
     fun `tags are exposed alphabetically`() = runTest(dispatcher) {

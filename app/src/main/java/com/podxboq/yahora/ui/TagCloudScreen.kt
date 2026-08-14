@@ -91,6 +91,7 @@ data class TagCloudCallbacks(
     val onRenameClick: (Tag) -> Unit,
     val onConfirmRename: () -> Unit,
     val onDismissRenameDialog: () -> Unit,
+    val onDeleteClick: (Tag) -> Unit,
 )
 
 @Composable
@@ -125,6 +126,7 @@ fun TagCloudScreen(
             onRenameClick = viewModel::onRenameClick,
             onConfirmRename = viewModel::onConfirmRename,
             onDismissRenameDialog = viewModel::onDismissRenameDialog,
+            onDeleteClick = viewModel::onDeleteClick,
         ),
         modifier = modifier,
     )
@@ -141,6 +143,8 @@ private fun TagCloudMessage.toText(context: Context): String = when (this) {
     is TagCloudMessage.EntryFailed -> context.getString(R.string.entry_failed, tagName)
 
     is TagCloudMessage.RenameFailed -> context.getString(R.string.rename_failed, tagName)
+
+    is TagCloudMessage.DeleteFailed -> context.getString(R.string.delete_failed, tagName)
 }
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -175,6 +179,7 @@ fun TagCloudContent(
                     TagChip(
                         tag = tag,
                         isMenuOpen = state.menuTagId == tag.id,
+                        canDelete = state.canDelete(tag.id),
                         callbacks = callbacks,
                     )
                 }
@@ -217,7 +222,12 @@ fun TagCloudContent(
  * type style, which is what the spec's "uniform size" means.
  */
 @Composable
-private fun TagChip(tag: Tag, isMenuOpen: Boolean, callbacks: TagCloudCallbacks) {
+private fun TagChip(
+    tag: Tag,
+    isMenuOpen: Boolean,
+    canDelete: Boolean,
+    callbacks: TagCloudCallbacks,
+) {
     val view = LocalView.current
 
     Box {
@@ -283,6 +293,14 @@ private fun TagChip(tag: Tag, isMenuOpen: Boolean, callbacks: TagCloudCallbacks)
                 text = { Text(stringResource(R.string.tag_menu_rename)) },
                 onClick = { callbacks.onRenameClick(tag) },
             )
+            // A tag with history cannot be deleted, so the action is left out
+            // rather than shown greyed out.
+            if (canDelete) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.tag_menu_delete)) },
+                    onClick = { callbacks.onDeleteClick(tag) },
+                )
+            }
         }
     }
 }
@@ -381,7 +399,7 @@ private fun TagCloudContentPreview() {
             state = TagCloudUiState(
                 tags = listOf(Tag(id = 1, name = "Coffee"), Tag(id = 2, name = "Medication")),
             ),
-            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
+            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
         )
     }
 }

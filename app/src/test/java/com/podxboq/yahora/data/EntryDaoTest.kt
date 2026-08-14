@@ -102,6 +102,27 @@ class EntryDaoTest {
     }
 
     @Test
+    fun `the tags that have entries are observed`() = runTest {
+        val coffee = tagDao.insert(Tag(name = "Coffee"))
+        val tea = tagDao.insert(Tag(name = "Tea"))
+        tagDao.insert(Tag(name = "Water"))
+        entryDao.insert(Entry(tagId = coffee, timestamp = 1))
+        entryDao.insert(Entry(tagId = coffee, timestamp = 2))
+        entryDao.insert(Entry(tagId = tea, timestamp = 3))
+
+        // Which tags are deletable is the question this answers, so a tag must
+        // appear once however many entries it holds.
+        assertEquals(setOf(coffee, tea), entryDao.observeTagIdsWithEntries().first().toSet())
+    }
+
+    @Test
+    fun `no tag has entries in an empty database`() = runTest {
+        tagDao.insert(Tag(name = "Coffee"))
+
+        assertEquals(emptyList<Long>(), entryDao.observeTagIdsWithEntries().first())
+    }
+
+    @Test
     fun `entries for a tag are observed newest first`() = runTest {
         val tagId = tagDao.insert(Tag(name = "Coffee"))
         entryDao.insert(Entry(tagId = tagId, timestamp = 100))

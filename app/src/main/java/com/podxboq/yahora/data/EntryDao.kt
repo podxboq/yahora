@@ -32,6 +32,14 @@ interface EntryDao {
     suspend fun countForTag(tagId: Long): Int
 
     /**
+     * The tags that hold at least one entry — that is, the ones that cannot be
+     * deleted. Observed rather than counted on demand so the cloud's menu
+     * reflects a tap the moment it lands.
+     */
+    @Query("SELECT DISTINCT tag_id FROM entries")
+    fun observeTagIdsWithEntries(): Flow<List<Long>>
+
+    /**
      * @throws android.database.sqlite.SQLiteConstraintException if [Entry.tagId]
      * does not match an existing tag.
      */

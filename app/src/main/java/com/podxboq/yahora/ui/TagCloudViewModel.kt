@@ -21,6 +21,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.podxboq.yahora.data.AddTagResult
+import com.podxboq.yahora.data.DeleteTagResult
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.LogEntryResult
 import com.podxboq.yahora.data.RenameTagResult
@@ -56,8 +57,16 @@ data class TagCloudUiState(
      * so a failure can still name the tag the user was editing.
      */
     val renamingTag: Tag? = null,
+    /** The tags that hold entries. They are the ones that cannot be deleted. */
+    val tagIdsWithEntries: Set<Long> = emptySet(),
 ) {
     val renamingTagId: Long? get() = renamingTag?.id
+
+    /**
+     * A tag with history cannot be deleted, so the action is left out of its
+     * menu entirely rather than shown greyed out.
+     */
+    fun canDelete(tagId: Long): Boolean = tagId !in tagIdsWithEntries
 }
 
 /**
@@ -68,6 +77,7 @@ sealed interface TagCloudMessage {
     data class EntryLogged(val tagName: String, val timestamp: Long) : TagCloudMessage
     data class EntryFailed(val tagName: String) : TagCloudMessage
     data class RenameFailed(val tagName: String) : TagCloudMessage
+    data class DeleteFailed(val tagName: String) : TagCloudMessage
 }
 
 class TagCloudViewModel(
@@ -85,6 +95,11 @@ class TagCloudViewModel(
         viewModelScope.launch {
             tagRepository.observeTags().collect { tags ->
                 _uiState.update { it.copy(tags = tags) }
+            }
+        }
+        viewModelScope.launch {
+            entryRepository.observeTagIdsWithEntries().collect { ids ->
+                _uiState.update { it.copy(tagIdsWithEntries = ids.toSet()) }
             }
         }
     }
@@ -116,6 +131,25 @@ class TagCloudViewModel(
 
     fun onDismissMenu() {
         _uiState.update { it.copy(menuTagId = null) }
+    }
+
+    /**
+     * Deletes a tag outright: no confirmation dialog, because a tag that can be
+     * deleted at all holds no history to lose. The menu is closed first, since
+     * the chip it hangs from is about to disappear.
+     */
+    fun onDeleteClick(tag: Tag) {
+        onDismissMenu()
+        viewModelScope.launch {
+            when (tagRepository.deleteTag(tag.id)) {
+                DeleteTagResult.Deleted -> Unit
+
+                // The menu hides the action, but an entry may have landed while
+                // it was open. The foreign key is the guarantee, not the UI.
+                DeleteTagResult.HasEntries ->
+                    _messages.send(TagCloudMessage.DeleteFailed(tag.name))
+            }
+        }
     }
 
     /** Opens the rename dialog on the name the tag has now, ready to be edited. */

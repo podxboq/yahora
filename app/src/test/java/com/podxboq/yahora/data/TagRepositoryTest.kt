@@ -214,6 +214,35 @@ class TagRepositoryTest {
         assertEquals(1, database.entryDao().countForTag(id))
     }
 
+    @Test
+    fun `deleting a tag with no entries removes it`() = runTest {
+        val id = createdId(repository.addTag("Coffee"))
+        repository.addTag("Tea")
+
+        val result = repository.deleteTag(id)
+
+        assertEquals(DeleteTagResult.Deleted, result)
+        assertEquals(listOf("Tea"), repository.observeTags().first().map { it.name })
+    }
+
+    @Test
+    fun `deleting a tag that has entries is refused`() = runTest {
+        val id = createdId(repository.addTag("Coffee"))
+        database.entryDao().insert(Entry(tagId = id, timestamp = 1_700_000_000_000))
+
+        val result = repository.deleteTag(id)
+
+        // History is never discarded as a side effect of deleting a tag.
+        assertEquals(DeleteTagResult.HasEntries, result)
+        assertEquals(listOf("Coffee"), repository.observeTags().first().map { it.name })
+        assertEquals(1, database.entryDao().countForTag(id))
+    }
+
+    @Test
+    fun `deleting a tag that is already gone is not an error`() = runTest {
+        assertEquals(DeleteTagResult.Deleted, repository.deleteTag(404))
+    }
+
     private fun createdId(result: AddTagResult): Long =
         (result as AddTagResult.Created).id
 }

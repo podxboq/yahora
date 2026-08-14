@@ -18,9 +18,11 @@
     <string name="entry_failed">No se pudo registrar %1$s: esa etiqueta ya no existe</string>
 
     <string name="rename_failed">No se pudo renombrar %1$s: esa etiqueta ya no existe</string>
+    <string name="delete_failed">No se pudo borrar %1$s: ahora tiene registros</string>
 
     <string name="tag_menu_view_entries">Ver registros</string>
     <string name="tag_menu_rename">Renombrar</string>
+    <string name="tag_menu_delete">Borrar</string>
 
     <string name="rename_tag_dialog_title">Renombrar %1$s</string>
     <string name="action_rename">Renombrar</string>

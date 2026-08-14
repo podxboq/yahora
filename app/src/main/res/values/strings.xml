@@ -23,6 +23,8 @@
     <string name="tag_name_counter">%1$d/%2$d</string>
     <string name="action_create">Create</string>
     <string name="action_cancel">Cancel</string>
+    <!-- Takes back the tap that logged an entry, while the snackbar is up. -->
+    <string name="action_undo">Undo</string>
 
     <!-- %1$s is the tag name, %2$s the time the entry was logged at. -->
     <string name="entry_logged">%1$s logged at %2$s</string>

@@ -22,7 +22,8 @@ import kotlinx.coroutines.flow.Flow
 
 /** Outcome of logging one occurrence of a tag. */
 sealed interface LogEntryResult {
-    data class Logged(val timestamp: Long) : LogEntryResult
+    /** [entryId] is what makes the tap undoable without looking it up again. */
+    data class Logged(val entryId: Long, val timestamp: Long) : LogEntryResult
 
     /** The tag was deleted between the cloud being drawn and the tap landing. */
     data object TagNotFound : LogEntryResult
@@ -45,11 +46,14 @@ class EntryRepository(
     suspend fun logEntry(tagId: Long): LogEntryResult {
         val timestamp = now()
         return try {
-            entryDao.insert(Entry(tagId = tagId, timestamp = timestamp))
-            LogEntryResult.Logged(timestamp)
+            val id = entryDao.insert(Entry(tagId = tagId, timestamp = timestamp))
+            LogEntryResult.Logged(entryId = id, timestamp = timestamp)
         } catch (_: SQLiteConstraintException) {
             // The foreign key rejected it: that tag no longer exists.
             LogEntryResult.TagNotFound
         }
     }
+
+    /** Removes a single entry — how a mistaken tap is taken back. */
+    suspend fun deleteEntry(id: Long) = entryDao.deleteById(id)
 }

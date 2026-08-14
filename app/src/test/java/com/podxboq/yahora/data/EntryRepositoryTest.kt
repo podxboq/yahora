@@ -55,8 +55,31 @@ class EntryRepositoryTest {
 
         val result = repository.logEntry(tagId)
 
-        assertEquals(LogEntryResult.Logged(now), result)
-        assertEquals(listOf(now), repository.observeEntriesForTag(tagId).first().map { it.timestamp })
+        val entry = repository.observeEntriesForTag(tagId).first().single()
+        // The id comes back so the tap can be undone without hunting for it.
+        assertEquals(LogEntryResult.Logged(entryId = entry.id, timestamp = now), result)
+        assertEquals(now, entry.timestamp)
+    }
+
+    @Test
+    fun `an entry can be deleted by id`() = runTest {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        val logged = repository.logEntry(tagId) as LogEntryResult.Logged
+        now += 60_000
+        repository.logEntry(tagId)
+
+        repository.deleteEntry(logged.entryId)
+
+        // Only that one: undoing a tap must not touch the rest of the history.
+        assertEquals(
+            listOf(1_700_000_060_000L),
+            repository.observeEntriesForTag(tagId).first().map { it.timestamp },
+        )
+    }
+
+    @Test
+    fun `deleting an entry that is already gone is harmless`() = runTest {
+        repository.deleteEntry(404)
     }
 
     @Test

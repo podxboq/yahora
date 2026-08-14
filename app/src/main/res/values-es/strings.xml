@@ -13,6 +13,7 @@
     <string name="tag_name_counter">%1$d/%2$d</string>
     <string name="action_create">Crear</string>
     <string name="action_cancel">Cancelar</string>
+    <string name="action_undo">Deshacer</string>
 
     <string name="entry_logged">%1$s registrado a las %2$s</string>
     <string name="entry_failed">No se pudo registrar %1$s: esa etiqueta ya no existe</string>

@@ -77,9 +77,12 @@ Room is the single source of truth; no in-memory caches parallel to it.
 
 Two conventions worth following rather than reinventing:
 
-- **One-shot user messages** (toasts) travel over a `Channel` exposed as a
+- **One-shot user messages** (snackbars) travel over a `Channel` exposed as a
   `Flow`, never as a field of the UI state — state would replay them on every
-  recomposition and configuration change. See `TagCloudMessage`.
+  recomposition and configuration change. See `TagCloudMessage`. The screen
+  collects them with `collectLatest`, so a second tap replaces the first
+  announcement instead of queueing behind it: an offer to undo must always be
+  about the tap that just happened.
 - **The clock is injected** (`EntryRepository(dao) { now }`), so tests pin
   timestamps instead of asserting against wall time. Never call
   `System.currentTimeMillis()` directly inside a repository or ViewModel. The
@@ -120,6 +123,12 @@ These are easy to get wrong; the spec is deliberate about each one.
   immediately — no intermediate screen, no confirmation dialog. It fires a
   haptic tick: nothing moves on screen, so that tick is the only confirmation
   a user gets without looking.
+- **A tap is taken back from its own snackbar**, which offers "undo" for as long
+  as it is up. Deliberately not a double tap: two taps must keep logging two
+  entries, and asking Compose to tell a double tap from a single one delays
+  *every* tap by the double-tap timeout, which would cost the immediacy the
+  whole app is built on. The snackbar carries the new entry's id, so undoing
+  never has to guess which entry was the last one.
 - **Motion is purposeful, never decorative** — see "Animation criteria" below
   for what is allowed and what is over-engineering.
 - Favorites are marked with a **star**, never by color alone, so the highlight

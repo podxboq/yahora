@@ -45,4 +45,8 @@ interface EntryDao {
      */
     @Insert
     suspend fun insert(entry: Entry): Long
+
+    /** Deletes one entry. Nothing happens if it is already gone. */
+    @Query("DELETE FROM entries WHERE id = :id")
+    suspend fun deleteById(id: Long)
 }

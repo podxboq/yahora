@@ -21,7 +21,6 @@ import android.content.Context
 import android.os.Build
 import android.text.format.DateFormat
 import android.view.HapticFeedbackConstants
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +49,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
@@ -58,6 +61,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -73,6 +77,7 @@ import com.podxboq.yahora.R
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.ui.theme.YahoraTheme
+import kotlinx.coroutines.flow.collectLatest
 import java.util.Date
 
 /**
@@ -103,15 +108,28 @@ fun TagCloudScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val undoLabel = stringResource(R.string.action_undo)
 
     LaunchedEffect(viewModel) {
-        viewModel.messages.collect { message ->
-            Toast.makeText(context, message.toText(context), Toast.LENGTH_SHORT).show()
+        // collectLatest, so a second tap replaces the first announcement instead
+        // of queueing behind it: the offer to undo must be about the last tap.
+        viewModel.messages.collectLatest { message ->
+            val undoable = message as? TagCloudMessage.EntryLogged
+            val result = snackbarHostState.showSnackbar(
+                message = message.toText(context),
+                actionLabel = undoable?.let { undoLabel },
+                duration = SnackbarDuration.Short,
+            )
+            if (result == SnackbarResult.ActionPerformed && undoable != null) {
+                viewModel.onUndoEntry(undoable.entryId)
+            }
         }
     }
 
     TagCloudContent(
         state = state,
+        snackbarHostState = snackbarHostState,
         callbacks = TagCloudCallbacks(
             onAddTagClick = viewModel::onAddTagClick,
             onDraftNameChange = viewModel::onDraftNameChange,
@@ -155,10 +173,12 @@ fun TagCloudContent(
     state: TagCloudUiState,
     callbacks: TagCloudCallbacks,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = callbacks.onAddTagClick) {
                 Text(stringResource(R.string.add_tag))

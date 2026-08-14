@@ -188,11 +188,55 @@ class TagCloudViewModelTest {
         viewModel.onTagClick(tag)
         advanceUntilIdle()
 
+        val entryId = database.entryDao().observeForTag(tag.id).first().single().id
         assertEquals(
-            TagCloudMessage.EntryLogged(tagName = "Coffee", timestamp = NOW),
+            // The id travels with the announcement so the tap can be undone.
+            TagCloudMessage.EntryLogged(entryId = entryId, tagName = "Coffee", timestamp = NOW),
             viewModel.messages.first(),
         )
         assertEquals(1, database.entryDao().countForTag(tag.id))
+    }
+
+    @Test
+    fun `undoing a logged entry removes it`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+        val logged = viewModel.messages.first() as TagCloudMessage.EntryLogged
+
+        viewModel.onUndoEntry(logged.entryId)
+        advanceUntilIdle()
+
+        assertEquals(0, database.entryDao().countForTag(tag.id))
+    }
+
+    @Test
+    fun `undoing one tap leaves the earlier ones alone`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+        database.entryDao().insert(Entry(tagId = tag.id, timestamp = NOW - 60_000))
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+        val logged = viewModel.messages.first() as TagCloudMessage.EntryLogged
+
+        viewModel.onUndoEntry(logged.entryId)
+        advanceUntilIdle()
+
+        // Undo takes back the last tap, never the history behind it.
+        assertEquals(1, database.entryDao().countForTag(tag.id))
+    }
+
+    @Test
+    fun `undoing the only entry makes the tag deletable again`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+        val logged = viewModel.messages.first() as TagCloudMessage.EntryLogged
+        assertTrue(viewModel.uiState.value.hasEntries(tag.id))
+
+        viewModel.onUndoEntry(logged.entryId)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.hasEntries(tag.id))
     }
 
     @Test

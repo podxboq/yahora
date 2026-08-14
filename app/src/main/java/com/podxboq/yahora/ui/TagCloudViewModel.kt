@@ -77,7 +77,15 @@ data class TagCloudUiState(
  * [TagCloudUiState] so it cannot be replayed when the screen recomposes.
  */
 sealed interface TagCloudMessage {
-    data class EntryLogged(val tagName: String, val timestamp: Long) : TagCloudMessage
+    /**
+     * Carries [entryId] so the announcement can offer to take the tap back:
+     * this is the only chance to undo one without going to the tag's history.
+     */
+    data class EntryLogged(
+        val entryId: Long,
+        val tagName: String,
+        val timestamp: Long,
+    ) : TagCloudMessage
     data class EntryFailed(val tagName: String) : TagCloudMessage
     data class RenameFailed(val tagName: String) : TagCloudMessage
     data class DeleteFailed(val tagName: String) : TagCloudMessage
@@ -115,7 +123,7 @@ class TagCloudViewModel(
         viewModelScope.launch {
             val message = when (val result = entryRepository.logEntry(tag.id)) {
                 is LogEntryResult.Logged ->
-                    TagCloudMessage.EntryLogged(tag.name, result.timestamp)
+                    TagCloudMessage.EntryLogged(result.entryId, tag.name, result.timestamp)
 
                 LogEntryResult.TagNotFound ->
                     TagCloudMessage.EntryFailed(tag.name)
@@ -134,6 +142,15 @@ class TagCloudViewModel(
 
     fun onDismissMenu() {
         _uiState.update { it.copy(menuTagId = null) }
+    }
+
+    /**
+     * Takes back a tap, while its announcement is still on screen. Past that
+     * window an entry is edited or deleted from the tag's own history, where
+     * removing one does ask for confirmation.
+     */
+    fun onUndoEntry(entryId: Long) {
+        viewModelScope.launch { entryRepository.deleteEntry(entryId) }
     }
 
     /** Stars a tag, or unstars it. Emphasis only: the cloud's order is untouched. */

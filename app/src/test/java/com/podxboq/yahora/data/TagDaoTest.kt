@@ -60,6 +60,19 @@ class TagDaoTest {
     }
 
     @Test
+    fun `a single tag is observed by id`() = runTest {
+        val id = dao.insert(Tag(name = "Coffee"))
+        dao.insert(Tag(name = "Tea"))
+
+        assertEquals("Coffee", dao.observeById(id).first()?.name)
+    }
+
+    @Test
+    fun `observing a tag that does not exist yields null`() = runTest {
+        assertEquals(null, dao.observeById(404).first())
+    }
+
+    @Test
     fun `tag name that differs only in case is rejected`() = runTest {
         dao.insert(Tag(name = "Coffee"))
 

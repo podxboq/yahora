@@ -16,4 +16,29 @@
 
     <string name="entry_logged">%1$s registrado a las %2$s</string>
     <string name="entry_failed">No se pudo registrar %1$s: esa etiqueta ya no existe</string>
+
+    <string name="tag_menu_view_entries">Ver registros</string>
+
+    <string name="action_back">Atrás</string>
+    <string name="tag_detail_empty">Aún no hay registros</string>
+    <string name="tag_detail_expand">Desplegar</string>
+    <string name="tag_detail_collapse">Plegar</string>
+    <string name="month_year_pattern">LLLL \'de\' yyyy</string>
+    <string name="day_pattern">EEEE d</string>
+    <string name="entry_time_pattern">HH:mm:ss</string>
+
+    <!--
+      "many" cubre los múltiplos de millón, que en español llevan "de":
+      "1.000.000 de días".
+    -->
+    <plurals name="day_count">
+        <item quantity="one">%d día</item>
+        <item quantity="many">%d de días</item>
+        <item quantity="other">%d días</item>
+    </plurals>
+    <plurals name="entry_count">
+        <item quantity="one">%d registro</item>
+        <item quantity="many">%d de registros</item>
+        <item quantity="other">%d registros</item>
+    </plurals>
 </resources>

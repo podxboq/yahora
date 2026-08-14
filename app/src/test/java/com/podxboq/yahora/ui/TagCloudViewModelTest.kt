@@ -220,6 +220,39 @@ class TagCloudViewModelTest {
     }
 
     @Test
+    fun `long pressing a tag opens its menu and dismissing closes it`() = runTest(dispatcher) {
+        val tag = Tag(id = 7, name = "Coffee")
+
+        viewModel.onTagLongClick(tag)
+        assertEquals(7L, viewModel.uiState.value.menuTagId)
+
+        viewModel.onDismissMenu()
+        assertNull(viewModel.uiState.value.menuTagId)
+    }
+
+    @Test
+    fun `a long press does not log an entry`() = runTest(dispatcher) {
+        viewModel.onAddTagClick()
+        viewModel.onDraftNameChange("Coffee")
+        viewModel.onConfirmAddTag()
+        advanceUntilIdle()
+        val tag = viewModel.uiState.value.tags.single()
+
+        viewModel.onTagLongClick(tag)
+        advanceUntilIdle()
+
+        assertEquals(0, database.entryDao().countForTag(tag.id))
+    }
+
+    @Test
+    fun `only one menu is open at a time`() = runTest(dispatcher) {
+        viewModel.onTagLongClick(Tag(id = 1, name = "Coffee"))
+        viewModel.onTagLongClick(Tag(id = 2, name = "Tea"))
+
+        assertEquals(2L, viewModel.uiState.value.menuTagId)
+    }
+
+    @Test
     fun `tags are exposed alphabetically`() = runTest(dispatcher) {
         listOf("Water", "coffee", "Tea").forEach { name ->
             viewModel.onAddTagClick()

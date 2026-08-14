@@ -47,6 +47,8 @@ data class TagCloudUiState(
     val isAddDialogVisible: Boolean = false,
     val draftName: String = "",
     val nameError: TagNameError? = null,
+    /** The tag whose context menu is open, if any. */
+    val menuTagId: Long? = null,
 )
 
 /**
@@ -92,6 +94,18 @@ class TagCloudViewModel(
             }
             _messages.send(message)
         }
+    }
+
+    /**
+     * A long press opens the tag's context menu — and logs nothing: only a short
+     * tap records an entry.
+     */
+    fun onTagLongClick(tag: Tag) {
+        _uiState.update { it.copy(menuTagId = tag.id) }
+    }
+
+    fun onDismissMenu() {
+        _uiState.update { it.copy(menuTagId = null) }
     }
 
     fun onAddTagClick() {

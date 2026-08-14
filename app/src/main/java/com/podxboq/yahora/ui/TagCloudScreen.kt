@@ -22,14 +22,19 @@ import android.os.Build
 import android.text.format.DateFormat
 import android.view.HapticFeedbackConstants
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -37,13 +42,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,6 +63,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -77,10 +85,17 @@ data class TagCloudCallbacks(
     val onConfirmAddTag: () -> Unit,
     val onDismissAddDialog: () -> Unit,
     val onTagClick: (Tag) -> Unit,
+    val onTagLongClick: (Tag) -> Unit,
+    val onDismissMenu: () -> Unit,
+    val onViewEntries: (Tag) -> Unit,
 )
 
 @Composable
-fun TagCloudScreen(viewModel: TagCloudViewModel, modifier: Modifier = Modifier) {
+fun TagCloudScreen(
+    viewModel: TagCloudViewModel,
+    onOpenTagDetail: (Tag) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
@@ -98,6 +113,12 @@ fun TagCloudScreen(viewModel: TagCloudViewModel, modifier: Modifier = Modifier) 
             onConfirmAddTag = viewModel::onConfirmAddTag,
             onDismissAddDialog = viewModel::onDismissAddDialog,
             onTagClick = viewModel::onTagClick,
+            onTagLongClick = viewModel::onTagLongClick,
+            onDismissMenu = viewModel::onDismissMenu,
+            onViewEntries = { tag ->
+                viewModel.onDismissMenu()
+                onOpenTagDetail(tag)
+            },
         ),
         modifier = modifier,
     )
@@ -143,7 +164,11 @@ fun TagCloudContent(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 state.tags.forEach { tag ->
-                    TagChip(tag = tag, onClick = { callbacks.onTagClick(tag) })
+                    TagChip(
+                        tag = tag,
+                        isMenuOpen = state.menuTagId == tag.id,
+                        callbacks = callbacks,
+                    )
                 }
             }
         }
@@ -155,44 +180,83 @@ fun TagCloudContent(
 }
 
 /**
- * One tag in the cloud. Favorites carry a star: the highlight must not rely on
- * color alone, and the star is described so screen readers announce it too.
+ * One tag in the cloud, and the anchor its context menu hangs from. Favorites
+ * carry a star: the highlight must not rely on color alone, and the star is
+ * described so screen readers announce it too.
+ *
+ * Built on [Surface] rather than `SuggestionChip` because the chip owns its
+ * click handling and never reports a long press, which is the gesture the
+ * context menu needs. The chip is as wide as its own name; every tag shares one
+ * type style, which is what the spec's "uniform size" means.
  */
 @Composable
-private fun TagChip(tag: Tag, onClick: () -> Unit) {
+private fun TagChip(tag: Tag, isMenuOpen: Boolean, callbacks: TagCloudCallbacks) {
     val view = LocalView.current
 
-    SuggestionChip(
-        onClick = {
-            // The tap is the whole interaction and nothing moves on screen, so a
-            // haptic tick is the confirmation you get without having to look.
-            view.performHapticFeedback(
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    HapticFeedbackConstants.CONFIRM
-                } else {
-                    HapticFeedbackConstants.VIRTUAL_KEY
-                },
-            )
-            onClick()
-        },
-        label = {
-            // A safety net for narrow screens and large accessibility fonts: the
-            // length cap alone does not guarantee the name fits.
-            Text(tag.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        },
-        icon = if (tag.isFavorite) {
-            {
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = stringResource(R.string.favorite_tag),
-                    modifier = Modifier.size(SuggestionChipDefaults.IconSize),
+    Box {
+        Surface(
+            modifier = Modifier
+                .heightIn(min = ChipHeight)
+                .combinedClickable(
+                    role = Role.Button,
+                    onClick = {
+                        // The tap is the whole interaction and nothing moves on
+                        // screen, so a haptic tick is the confirmation you get
+                        // without having to look.
+                        view.performHapticFeedback(
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                                HapticFeedbackConstants.CONFIRM
+                            } else {
+                                HapticFeedbackConstants.VIRTUAL_KEY
+                            },
+                        )
+                        callbacks.onTagClick(tag)
+                    },
+                    onLongClick = {
+                        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        callbacks.onTagLongClick(tag)
+                    },
+                ),
+            shape = MaterialTheme.shapes.small,
+            color = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (tag.isFavorite) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = stringResource(R.string.favorite_tag),
+                        modifier = Modifier.size(SuggestionChipDefaults.IconSize),
+                    )
+                }
+                // A safety net for narrow screens and large accessibility fonts:
+                // the length cap alone does not guarantee the name fits.
+                Text(
+                    text = tag.name,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
-        } else {
-            null
-        },
-    )
+        }
+
+        // DropdownMenu brings its own open and close transition, so the menu
+        // grows out of the chip it belongs to instead of appearing whole.
+        DropdownMenu(expanded = isMenuOpen, onDismissRequest = callbacks.onDismissMenu) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.tag_menu_view_entries)) },
+                onClick = { callbacks.onViewEntries(tag) },
+            )
+        }
+    }
 }
+
+private val ChipHeight = 32.dp
 
 @Composable
 private fun EmptyTagCloud(modifier: Modifier = Modifier) {
@@ -277,7 +341,7 @@ private fun TagCloudContentPreview() {
             state = TagCloudUiState(
                 tags = listOf(Tag(id = 1, name = "Coffee"), Tag(id = 2, name = "Medication")),
             ),
-            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}),
+            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}),
         )
     }
 }

@@ -31,6 +31,12 @@ android {
         }
     }
 
+    compileOptions {
+        // The detail screen groups entries with java.time, which is API 26.
+        // Desugaring backports it rather than raising minSdk.
+        isCoreLibraryDesugaringEnabled = true
+    }
+
     buildFeatures {
         compose = true
     }
@@ -64,6 +70,8 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.core)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    coreLibraryDesugaring(libs.android.desugar.jdk.libs)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

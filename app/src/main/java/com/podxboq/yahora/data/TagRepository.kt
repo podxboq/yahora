@@ -32,6 +32,8 @@ class TagRepository(private val tagDao: TagDao) {
 
     fun observeTags(): Flow<List<Tag>> = tagDao.observeAll()
 
+    fun observeTag(id: Long): Flow<Tag?> = tagDao.observeById(id)
+
     /**
      * Creates a tag from a raw, user-typed name. The name is stored trimmed but
      * with the typed capitalization intact; uniqueness ignores case and

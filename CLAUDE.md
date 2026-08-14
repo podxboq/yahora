@@ -24,7 +24,7 @@ Single module `:app`, base package `com.podxboq.yahora`. Fully offline — no
 network layer. Versions are pinned in `gradle/libs.versions.toml`; add
 dependencies there, never inline in `app/build.gradle.kts`.
 
-Three constraints that are easy to trip over and cost a broken build:
+Four constraints that are easy to trip over and cost a broken build:
 
 - **AGP 9 ships built-in Kotlin support.** Applying `org.jetbrains.kotlin.android`
   makes the build fail outright. Only `com.android.application`,
@@ -35,6 +35,10 @@ Three constraints that are easy to trip over and cost a broken build:
 - **Robolectric lags the platform.** It supports up to SDK 36 while the app
   targets 37, so `app/src/test/resources/robolectric.properties` pins `sdk=36`.
   Without it every JVM test fails at startup.
+- **`java.time` needs desugaring.** It is API 26 and `minSdk` is 24, so
+  `isCoreLibraryDesugaringEnabled` plus `coreLibraryDesugaring(...)` are what
+  make the detail screen's date grouping compile. Removing either breaks the
+  build; raising `minSdk` instead is not the trade this project wants.
 
 ## Commands
 
@@ -78,7 +82,11 @@ Two conventions worth following rather than reinventing:
   recomposition and configuration change. See `TagCloudMessage`.
 - **The clock is injected** (`EntryRepository(dao) { now }`), so tests pin
   timestamps instead of asserting against wall time. Never call
-  `System.currentTimeMillis()` directly inside a repository or ViewModel.
+  `System.currentTimeMillis()` directly inside a repository or ViewModel. The
+  time **zone** is injected for the same reason (`TagDetailViewModel(…, zone)`):
+  grouping entries by month and day is a calendar question, not a UTC one.
+- **Navigation is a single saved tag id** in `YahoraApp`, not a library. Two
+  destinations — the cloud and one tag's detail — are the whole back stack.
 
 Schema changes need a `Migration` in `YahoraDatabase` plus a test; copy the SQL
 verbatim from the exported schema under `app/schemas`, which is what Room
@@ -112,8 +120,8 @@ These are easy to get wrong; the spec is deliberate about each one.
   immediately — no intermediate screen, no confirmation dialog. It fires a
   haptic tick: nothing moves on screen, so that tick is the only confirmation
   a user gets without looking.
-- **Motion is deliberately minimal** — no custom animations beyond what
-  Material 3 does by default. Do not add flourishes.
+- **Motion is purposeful, never decorative** — see "Animation criteria" below
+  for what is allowed and what is over-engineering.
 - Favorites are marked with a **star**, never by color alone, so the highlight
   survives color blindness and greyscale. The icon carries a content
   description.
@@ -122,10 +130,31 @@ These are easy to get wrong; the spec is deliberate about each one.
   size and weight, with no per-tag styling — not to a uniform chip width.
 - **Long press** opens a context menu: rename, toggle favorite, view entries,
   and delete tag (only when it has no entries). Inapplicable actions are
-  **omitted**, not greyed out.
+  **omitted**, not greyed out. Only "view entries" is built so far.
+- **Viewing entries** opens the tag's own screen: its name as the title and its
+  history as a collapsible tree — months, then days, then the entries
+  themselves at `HH:mm:ss`. Branches state how many children they hold (a month
+  counts days, a day counts entries); an entry states its own time instead,
+  since it has nothing to count. The tree opens fully collapsed. Row labels are
+  formatted from patterns in `strings.xml`, so a new locale never means
+  touching Kotlin.
 - Deleting an individual entry **does** require a confirmation dialog. Deleting
   a tag (only possible when empty) does **not** — no history is lost.
 - Entry timestamps are editable after the fact.
+
+## Animation criteria
+
+Animation must be subtle and always serve a clear purpose — state feedback, or
+orienting the user through a transition — never decoration for its own sake.
+
+- Immediate feedback when a tag chip is tapped (a slight scale or color change
+  as the entry is recorded, for instance).
+- Smooth transitions as a tag's context menu opens and closes.
+- Use Jetpack Compose's own animation APIs exclusively: `AnimatedVisibility`,
+  `animateFloatAsState`, and `SharedTransitionLayout` for transitions between
+  screens.
+- Avoid over-engineering: a native C++ animation engine — or any equivalent
+  low-level machinery of the kind apps like Telegram build — is out of scope.
 
 ## Development workflow: TDD
 

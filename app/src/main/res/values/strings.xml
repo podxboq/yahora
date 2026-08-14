@@ -27,4 +27,32 @@
     <!-- %1$s is the tag name, %2$s the time the entry was logged at. -->
     <string name="entry_logged">%1$s logged at %2$s</string>
     <string name="entry_failed">Could not log %1$s: that tag no longer exists</string>
+
+    <!-- Long-press context menu. -->
+    <string name="tag_menu_view_entries">View entries</string>
+
+    <!-- Tag detail screen. -->
+    <string name="action_back">Back</string>
+    <string name="tag_detail_empty">No entries yet</string>
+    <string name="tag_detail_expand">Expand</string>
+    <string name="tag_detail_collapse">Collapse</string>
+    <!--
+      java.time patterns for the tree rows. Translations should reword them to
+      whatever reads naturally in the locale: adding a language must never mean
+      touching Kotlin. LLLL is the standalone month name, EEEE the weekday.
+    -->
+    <string name="month_year_pattern">LLLL yyyy</string>
+    <string name="day_pattern">EEEE d</string>
+    <!-- An entry states the second it was logged at, so two taps never look alike. -->
+    <string name="entry_time_pattern">HH:mm:ss</string>
+
+    <!-- How many children a collapsed row holds. -->
+    <plurals name="day_count">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="entry_count">
+        <item quantity="one">%d entry</item>
+        <item quantity="other">%d entries</item>
+    </plurals>
 </resources>

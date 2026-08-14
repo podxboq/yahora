@@ -21,12 +21,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
-import com.podxboq.yahora.ui.TagCloudScreen
-import com.podxboq.yahora.ui.TagCloudViewModel
+import com.podxboq.yahora.ui.YahoraApp
 import com.podxboq.yahora.ui.theme.YahoraTheme
 
 class MainActivity : ComponentActivity() {
@@ -40,11 +38,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             YahoraTheme {
-                TagCloudScreen(
-                    viewModel = viewModel(
-                        factory = TagCloudViewModel.factory(tagRepository, entryRepository),
-                    ),
-                )
+                YahoraApp(tagRepository = tagRepository, entryRepository = entryRepository)
             }
         }
     }

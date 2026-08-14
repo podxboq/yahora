@@ -38,6 +38,10 @@ interface TagDao {
     @Query("SELECT * FROM tags ORDER BY name COLLATE LOCALIZED ASC")
     fun observeAll(): Flow<List<Tag>>
 
+    /** Null once the tag is gone, so a screen showing it can react. */
+    @Query("SELECT * FROM tags WHERE id = :id LIMIT 1")
+    fun observeById(id: Long): Flow<Tag?>
+
     @Query("SELECT * FROM tags WHERE name_key = :nameKey LIMIT 1")
     suspend fun findByNameKey(nameKey: String): Tag?
 

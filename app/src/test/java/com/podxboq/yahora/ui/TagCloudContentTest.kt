@@ -20,10 +20,13 @@ package com.podxboq.yahora.ui
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import com.podxboq.yahora.data.Tag
 import org.junit.Rule
 import org.junit.Test
@@ -176,11 +179,77 @@ class TagCloudContentTest {
         assert(confirmed) { "Expected the confirm action to be invoked" }
     }
 
+    @Test
+    fun `long pressing a tag opens its menu instead of logging an entry`() {
+        var longPressed: Tag? = null
+        var tapped: Tag? = null
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee)),
+                callbacks = noopCallbacks.copy(
+                    onTagClick = { tapped = it },
+                    onTagLongClick = { longPressed = it },
+                ),
+            )
+        }
+
+        composeRule.onNodeWithText("Coffee").performTouchInput { longClick() }
+
+        assert(longPressed == coffee) { "Expected the long press to be reported, was $longPressed" }
+        assert(tapped == null) { "A long press must not log an entry" }
+    }
+
+    @Test
+    fun `no context menu is shown until a tag asks for one`() {
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(Tag(id = 1, name = "Coffee"))),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("View entries").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the context menu opens the tag detail`() {
+        var opened: Tag? = null
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee), menuTagId = coffee.id),
+                callbacks = noopCallbacks.copy(onViewEntries = { opened = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("View entries").performClick()
+
+        assert(opened == coffee) { "Expected the detail action to report the tag, was $opened" }
+    }
+
+    @Test
+    fun `only the long pressed tag shows a menu`() {
+        val coffee = Tag(id = 1, name = "Coffee")
+        val tea = Tag(id = 2, name = "Tea")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee, tea), menuTagId = tea.id),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onAllNodesWithText("View entries").assertCountEquals(1)
+    }
+
     private val noopCallbacks = TagCloudCallbacks(
         onAddTagClick = {},
         onDraftNameChange = {},
         onConfirmAddTag = {},
         onDismissAddDialog = {},
         onTagClick = {},
+        onTagLongClick = {},
+        onDismissMenu = {},
+        onViewEntries = {},
     )
 }

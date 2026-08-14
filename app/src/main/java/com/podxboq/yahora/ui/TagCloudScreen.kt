@@ -181,7 +181,7 @@ fun TagCloudContent(
                     TagChip(
                         tag = tag,
                         isMenuOpen = state.menuTagId == tag.id,
-                        canDelete = state.canDelete(tag.id),
+                        hasEntries = state.hasEntries(tag.id),
                         callbacks = callbacks,
                     )
                 }
@@ -227,7 +227,7 @@ fun TagCloudContent(
 private fun TagChip(
     tag: Tag,
     isMenuOpen: Boolean,
-    canDelete: Boolean,
+    hasEntries: Boolean,
     callbacks: TagCloudCallbacks,
 ) {
     val view = LocalView.current
@@ -287,10 +287,15 @@ private fun TagChip(
         // DropdownMenu brings its own open and close transition, so the menu
         // grows out of the chip it belongs to instead of appearing whole.
         DropdownMenu(expanded = isMenuOpen, onDismissRequest = callbacks.onDismissMenu) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.tag_menu_view_entries)) },
-                onClick = { callbacks.onViewEntries(tag) },
-            )
+            // Two actions, one condition: history means there is something to
+            // show and nothing that may be deleted, and the reverse. Neither is
+            // ever greyed out — the one that does not apply is simply absent.
+            if (hasEntries) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.tag_menu_view_entries)) },
+                    onClick = { callbacks.onViewEntries(tag) },
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.tag_menu_rename)) },
                 onClick = { callbacks.onRenameClick(tag) },
@@ -310,9 +315,7 @@ private fun TagChip(
                 },
                 onClick = { callbacks.onToggleFavorite(tag) },
             )
-            // A tag with history cannot be deleted, so the action is left out
-            // rather than shown greyed out.
-            if (canDelete) {
+            if (!hasEntries) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.tag_menu_delete)) },
                     onClick = { callbacks.onDeleteClick(tag) },

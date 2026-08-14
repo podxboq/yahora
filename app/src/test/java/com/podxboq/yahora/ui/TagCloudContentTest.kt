@@ -218,7 +218,11 @@ class TagCloudContentTest {
         val coffee = Tag(id = 1, name = "Coffee")
         composeRule.setContent {
             TagCloudContent(
-                state = TagCloudUiState(tags = listOf(coffee), menuTagId = coffee.id),
+                state = TagCloudUiState(
+                    tags = listOf(coffee),
+                    menuTagId = coffee.id,
+                    tagIdsWithEntries = setOf(coffee.id),
+                ),
                 callbacks = noopCallbacks.copy(onViewEntries = { opened = it }),
             )
         }
@@ -229,12 +233,32 @@ class TagCloudContentTest {
     }
 
     @Test
+    fun `the context menu omits viewing the entries of a tag with none`() {
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee), menuTagId = coffee.id),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        // Nothing to show, so the action is left out — as with delete, the
+        // inapplicable half of the pair simply is not there.
+        composeRule.onNodeWithText("View entries").assertDoesNotExist()
+        composeRule.onNodeWithText("Delete").assertIsDisplayed()
+    }
+
+    @Test
     fun `only the long pressed tag shows a menu`() {
         val coffee = Tag(id = 1, name = "Coffee")
         val tea = Tag(id = 2, name = "Tea")
         composeRule.setContent {
             TagCloudContent(
-                state = TagCloudUiState(tags = listOf(coffee, tea), menuTagId = tea.id),
+                state = TagCloudUiState(
+                    tags = listOf(coffee, tea),
+                    menuTagId = tea.id,
+                    tagIdsWithEntries = setOf(coffee.id, tea.id),
+                ),
                 callbacks = noopCallbacks,
             )
         }
@@ -339,6 +363,7 @@ class TagCloudContentTest {
 
         // Omitted, never greyed out.
         composeRule.onNodeWithText("Delete").assertDoesNotExist()
+        composeRule.onNodeWithText("View entries").assertIsDisplayed()
         composeRule.onNodeWithText("Rename").assertIsDisplayed()
     }
 

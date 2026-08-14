@@ -355,20 +355,34 @@ class TagCloudViewModelTest {
     }
 
     @Test
-    fun `a tag with no entries can be deleted`() = runTest(dispatcher) {
+    fun `a fresh tag has no history`() = runTest(dispatcher) {
         val tag = addTag("Coffee")
 
-        assertTrue(viewModel.uiState.value.canDelete(tag.id))
+        // Nothing to view, and safe to delete.
+        assertFalse(viewModel.uiState.value.hasEntries(tag.id))
     }
 
     @Test
-    fun `logging an entry makes a tag undeletable straight away`() = runTest(dispatcher) {
+    fun `logging an entry gives a tag history straight away`() = runTest(dispatcher) {
         val tag = addTag("Coffee")
 
         viewModel.onTagClick(tag)
         advanceUntilIdle()
 
-        assertFalse(viewModel.uiState.value.canDelete(tag.id))
+        // From this tap on there are entries to view and the tag is undeletable.
+        assertTrue(viewModel.uiState.value.hasEntries(tag.id))
+    }
+
+    @Test
+    fun `history is tracked per tag`() = runTest(dispatcher) {
+        val coffee = addTag("Coffee")
+        val tea = addTag("Tea")
+
+        viewModel.onTagClick(coffee)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.hasEntries(coffee.id))
+        assertFalse(viewModel.uiState.value.hasEntries(tea.id))
     }
 
     @Test

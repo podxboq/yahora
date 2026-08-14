@@ -63,10 +63,13 @@ data class TagCloudUiState(
     val renamingTagId: Long? get() = renamingTag?.id
 
     /**
-     * A tag with history cannot be deleted, so the action is left out of its
-     * menu entirely rather than shown greyed out.
+     * Whether a tag has any history. It decides both halves of a pair of menu
+     * actions that can never apply at once: with history there are entries to
+     * view and the tag cannot be deleted; without it there is nothing to show
+     * and deleting is safe. The inapplicable one is left out of the menu
+     * entirely rather than shown greyed out.
      */
-    fun canDelete(tagId: Long): Boolean = tagId !in tagIdsWithEntries
+    fun hasEntries(tagId: Long): Boolean = tagId in tagIdsWithEntries
 }
 
 /**

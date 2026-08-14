@@ -132,11 +132,14 @@ These are easy to get wrong; the spec is deliberate about each one.
   and delete tag (only when it has no entries). Inapplicable actions are
   **omitted**, not greyed out. All four are built. Each item names what it will
   do — "Mark as favorite" or "Remove from favorites" — not what the tag is.
-- **Which tags are deletable** comes from `SELECT DISTINCT tag_id FROM entries`,
-  observed alongside the tags themselves, so a tap removes the delete action
-  from that tag's menu at once. The UI hiding it is a courtesy; the foreign key
-  is the guarantee, and the repository still handles the refusal that arrives
-  when an entry lands while the menu is open.
+- **View entries and delete are the two halves of one condition**: whether the
+  tag has history. With entries there is something to show and nothing that may
+  be deleted; without them, the reverse. Exactly one of the two is ever in the
+  menu. That condition comes from `SELECT DISTINCT tag_id FROM entries`,
+  observed alongside the tags themselves, so a tap swaps the pair at once. The
+  UI hiding delete is a courtesy; the foreign key is the guarantee, and the
+  repository still handles the refusal that arrives when an entry lands while
+  the menu is open.
 - **Renaming** reuses the creation dialog — same field, same 128 code point cap,
   same errors — prefilled with the current name. A tag never collides with
   itself, so recapitalizing "coffee" to "Coffee" must go through; the duplicate

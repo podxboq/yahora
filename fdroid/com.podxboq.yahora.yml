@@ -23,7 +23,7 @@
 # in this file would only go stale.
 
 Categories:
-  - Time
+  - Habit Tracker
 License: GPL-3.0-or-later
 AuthorName: podxboq
 AuthorEmail: podxboq@gmail.com
@@ -42,7 +42,7 @@ Builds:
     gradle:
       - yes
 
-AutoUpdateMode: Version v%v
+AutoUpdateMode: Version
 UpdateCheckMode: Tags
 CurrentVersion: 0.1.0
 CurrentVersionCode: 1

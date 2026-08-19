@@ -31,6 +31,8 @@ SourceCode: https://github.com/podxboq/yahora
 IssueTracker: https://github.com/podxboq/yahora/issues
 Changelog: https://github.com/podxboq/yahora/releases
 
+AutoName: Yahora
+
 RepoType: git
 Repo: https://github.com/podxboq/yahora.git
 

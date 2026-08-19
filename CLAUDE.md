@@ -55,12 +55,17 @@ Four constraints that are easy to trip over and cost a broken build:
 
 Always use the Gradle wrapper, never a system-wide `gradle`.
 
-The build does not depend on whichever JDK the machine happens to have.
-`gradle/gradle-daemon-jvm.properties` pins the daemon to Java 21 and
-`app/build.gradle.kts` declares `jvmToolchain(21)`; Gradle downloads a matching
-JDK if needed via the foojay resolver in `settings.gradle.kts`. So `./gradlew`
-works even when `java -version` reports something much newer. Do not add
-`org.gradle.java.home` — that would hardcode one machine's layout.
+The build pins its Java version rather than inheriting one:
+`gradle/gradle-daemon-jvm.properties` puts the daemon on Java 21 and
+`app/build.gradle.kts` declares `jvmToolchain(21)`. Gradle finds any JDK 21
+already on the machine — including one it downloaded for an earlier build under
+`~/.gradle/jdks` — so `./gradlew` works even when `java -version` reports
+something much newer. What it will not do is fetch one: **the foojay toolchain
+resolver is deliberately absent**. F-Droid's scanner refuses it, since it pulls
+a JDK over the network at build time, and that is what a reproducible build
+cannot have. A machine with no JDK 21 gets an error naming the missing
+toolchain, which is the trade. Do not add `org.gradle.java.home` either — that
+would hardcode one machine's layout.
 
 Machine-specific paths and installed SDK versions belong in `CLAUDE.local.md`
 (untracked), not here.

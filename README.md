@@ -56,9 +56,10 @@ Once the Gradle project is in place:
 ./gradlew test            # run unit tests
 ```
 
-Requires the Android SDK and a JDK compatible with the current Android Gradle
-Plugin (a Java toolchain is declared in the build, so Gradle can provision one
-automatically).
+Requires the Android SDK and a JDK 21, which the build asks for by declaring a
+Java toolchain. Gradle will use any JDK 21 it can find but will not download
+one: the foojay toolchain resolver is left out on purpose, because fetching a
+JDK during the build is incompatible with how F-Droid builds this app.
 
 ## Distribution
 

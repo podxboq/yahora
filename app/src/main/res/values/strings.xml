@@ -37,6 +37,8 @@
     <string name="tag_menu_view_entries">View entries</string>
     <string name="tag_menu_rename">Rename</string>
     <string name="tag_menu_delete">Delete</string>
+    <!-- Debug builds only: discards the tag together with its history. -->
+    <string name="tag_menu_purge">Delete with its entries</string>
     <string name="tag_menu_favorite">Mark as favorite</string>
     <string name="tag_menu_unfavorite">Remove from favorites</string>
 
@@ -52,6 +54,8 @@
     <!-- %1$s is the time the entry was logged at. -->
     <string name="delete_entry_dialog_text">It was logged at %1$s. This cannot be undone.</string>
     <string name="action_delete">Delete</string>
+    <string name="purge_tag_dialog_title">Delete %1$s and its entries?</string>
+    <string name="purge_tag_dialog_text">Every entry logged under this tag goes with it. This cannot be undone.</string>
     <string name="tag_detail_expand">Expand</string>
     <string name="tag_detail_collapse">Collapse</string>
     <!--

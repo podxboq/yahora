@@ -20,6 +20,7 @@ package com.podxboq.yahora.data
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -85,6 +86,26 @@ interface TagDao {
      */
     @Query("DELETE FROM tags WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /** @see purgeById — never call this without deleting the tag in the same breath. */
+    @Query("DELETE FROM entries WHERE tag_id = :id")
+    suspend fun deleteEntriesOf(id: Long)
+
+    /**
+     * Deletes a tag together with its history. This is the one operation that
+     * discards entries, and it exists for debug builds only — see
+     * [TagRepository.purgeTag], which is what decides whether it may run.
+     *
+     * The entries go first and the tag second, inside a transaction: the foreign
+     * key is still RESTRICT, so the order is not a preference but the only one
+     * that works, and the transaction is what stops a failure halfway from
+     * leaving a tag whose history was already thrown away.
+     */
+    @Transaction
+    suspend fun purgeById(id: Long) {
+        deleteEntriesOf(id)
+        deleteById(id)
+    }
 }
 
 /** Looks a tag up by a raw, user-typed name. */

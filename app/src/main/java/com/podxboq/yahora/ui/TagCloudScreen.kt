@@ -98,6 +98,9 @@ data class TagCloudCallbacks(
     val onDismissRenameDialog: () -> Unit,
     val onDeleteClick: (Tag) -> Unit,
     val onToggleFavorite: (Tag) -> Unit,
+    val onPurgeClick: (Tag) -> Unit,
+    val onConfirmPurge: () -> Unit,
+    val onDismissPurgeDialog: () -> Unit,
 )
 
 @Composable
@@ -147,6 +150,9 @@ fun TagCloudScreen(
             onDismissRenameDialog = viewModel::onDismissRenameDialog,
             onDeleteClick = viewModel::onDeleteClick,
             onToggleFavorite = viewModel::onToggleFavorite,
+            onPurgeClick = viewModel::onPurgeClick,
+            onConfirmPurge = viewModel::onConfirmPurge,
+            onDismissPurgeDialog = viewModel::onDismissPurgeDialog,
         ),
         modifier = modifier,
     )
@@ -202,6 +208,7 @@ fun TagCloudContent(
                         tag = tag,
                         isMenuOpen = state.menuTagId == tag.id,
                         hasEntries = state.hasEntries(tag.id),
+                        canPurge = state.canPurgeTags,
                         callbacks = callbacks,
                     )
                 }
@@ -217,6 +224,26 @@ fun TagCloudContent(
             onConfirm = callbacks.onConfirmAddTag,
             onDismiss = callbacks.onDismissAddDialog,
             onDraftNameChange = callbacks.onDraftNameChange,
+        )
+    }
+
+    // Deleting an empty tag needs no confirmation; this one does, because it is
+    // the single place in the app where history is discarded on purpose.
+    state.purgingTag?.let { tag ->
+        AlertDialog(
+            onDismissRequest = callbacks.onDismissPurgeDialog,
+            title = { Text(stringResource(R.string.purge_tag_dialog_title, tag.name)) },
+            text = { Text(stringResource(R.string.purge_tag_dialog_text)) },
+            confirmButton = {
+                TextButton(onClick = callbacks.onConfirmPurge) {
+                    Text(stringResource(R.string.action_delete))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = callbacks.onDismissPurgeDialog) {
+                    Text(stringResource(R.string.action_cancel))
+                }
+            },
         )
     }
 
@@ -248,6 +275,7 @@ private fun TagChip(
     tag: Tag,
     isMenuOpen: Boolean,
     hasEntries: Boolean,
+    canPurge: Boolean,
     callbacks: TagCloudCallbacks,
 ) {
     val view = LocalView.current
@@ -339,6 +367,15 @@ private fun TagChip(
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.tag_menu_delete)) },
                     onClick = { callbacks.onDeleteClick(tag) },
+                )
+            } else if (canPurge) {
+                // Debug builds only, and only where the ordinary delete is
+                // absent: a way to clear out the records left by trying the app
+                // out. It names the history it takes, since that is the whole
+                // difference from the delete above.
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.tag_menu_purge)) },
+                    onClick = { callbacks.onPurgeClick(tag) },
                 )
             }
         }
@@ -439,7 +476,9 @@ private fun TagCloudContentPreview() {
             state = TagCloudUiState(
                 tags = listOf(Tag(id = 1, name = "Coffee"), Tag(id = 2, name = "Medication")),
             ),
-            callbacks = TagCloudCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
+            callbacks = TagCloudCallbacks(
+                {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
+            ),
         )
     }
 }

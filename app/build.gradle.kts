@@ -39,6 +39,9 @@ android {
 
     buildFeatures {
         compose = true
+        // For BuildConfig.DEBUG, which is what decides whether a tag may be
+        // deleted together with its history. Off by default since AGP 8.
+        buildConfig = true
     }
 
     testOptions {

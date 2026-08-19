@@ -41,11 +41,12 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      # compileSdk is newer than what the runner image ships, and AGP only
-      # downloads a platform whose licence is already accepted.
+      # compileSdk is newer than what the runner image ships. The platform is
+      # named after its minor release — the build sets compileSdkMinor = 1, so
+      # it wants android-37.1 and there is no package called android-37.
       - uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-37 build-tools;37.0.0'
+          packages: 'platforms;android-37.1 build-tools;37.0.0'
 
       - uses: gradle/actions/setup-gradle@v4
 

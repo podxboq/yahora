@@ -5,10 +5,9 @@ time of a recurring event — nothing else. Tags are laid out as a cloud of
 uniform chips, and logging something takes a single touch: no intermediate
 screen, no confirmation dialog, no extra fields.
 
-> **Experimental concept.** Yahora is at an early design stage. The repository
-> currently contains the specification and project scaffolding only — there is
-> no working application yet, no release, and no installable build. Everything
-> below describes the intended design and may change.
+> **Early days.** Yahora works and is being prepared for its first release
+> (0.1.0), but it is still young: the scope below is what the app does today,
+> and it may still shift.
 
 ## Concept
 
@@ -18,20 +17,23 @@ and a favorite flag; an entry has a timestamp. That is the entire model.
 
 The design goal is that recording an event costs one tap and zero attention.
 
-## Planned features
+## Features
 
 - **Tag cloud** — chips flowing across the screen, each as wide as its name and
   all sharing one type size, sorted alphabetically. Favorites are marked with a
   star without changing their position in the ordering.
 - **One-tap logging** — a short tap on a tag records the current timestamp
-  immediately.
+  immediately, with a haptic tick as the confirmation, and offers to undo it
+  from its own snackbar.
 - **Context menu** — a long press offers renaming, toggling favorite, and
   browsing that tag's entries. Actions that do not apply are hidden rather than
   shown disabled.
-- **Editable history** — the date and time of any entry can be corrected after
-  the fact, and individual entries can be deleted.
+- **History as a tree** — months, then days, then the entries themselves at
+  `HH:mm:ss`, each branch stating how many children it holds.
 - **Safe by construction** — a tag that has entries cannot be deleted, so
-  history is never lost by accident.
+  history is never lost by accident. An entry can be removed shortly after it
+  was logged, which is the window in which a slip of the finger is noticed;
+  timestamps are never edited.
 
 ## Out of scope for now
 
@@ -60,8 +62,32 @@ automatically).
 
 ## Distribution
 
-Free software from the start. Distribution is planned through Google Play,
-F-Droid and GitHub, with no freemium model, no ads and no in-app purchases.
+Free software from the start, with no freemium model, no ads and no in-app
+purchases. F-Droid is the first channel; GitHub releases and Google Play are
+meant to follow.
+
+The store listing lives in this repository, under
+`fastlane/metadata/android/<locale>/`, which is where F-Droid reads it from —
+description, changelog per version code, icon and screenshots. Its limits are
+checked by `FdroidMetadataTest`, so an over-long description fails the build
+rather than the merge request. The listing icon is not drawn by hand:
+`tools/render-listing-icon.py` rasterises it from the launcher icon's own
+drawables.
+
+Screenshots come from a real device carrying a history that was written into a
+debug build's database: the tree groups entries by month and day, and timestamps
+are never editable, so an install tapped into existence this afternoon has
+nothing to show. `tools/seed-demo-data.py` is the quickest way to get one — a
+fixed-seed history, so the same run weeks later still matches the screenshots it
+produced. They are then cropped with `tools/crop-screenshot.py`, which takes the
+phone's status and navigation bars off.
+
+`fdroid/com.podxboq.yahora.yml` is the build recipe F-Droid needs. It is kept
+here for review, but F-Droid reads its own copy in
+[fdroiddata](https://gitlab.com/fdroid/fdroiddata), where each release arrives
+as a merge request. A release is a signed, annotated git tag named `v<version
+name>` — `v0.1.0` for `versionName = "0.1.0"` — and `versionCode` only ever
+goes up.
 
 ## Contributing
 

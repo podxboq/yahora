@@ -1,0 +1,8 @@
+Primera versión.
+
+Nube de etiquetas con registro de un toque y deshacer, pulsación larga para
+renombrar, marcar como favorita y ver el historial, y un árbol plegable de
+meses, días y entradas. Una entrada se puede borrar durante un rato después de
+registrarla, por si se ha ido el dedo.
+
+Funciona sin conexión: sin permiso de red, sin cuentas, sin analítica.

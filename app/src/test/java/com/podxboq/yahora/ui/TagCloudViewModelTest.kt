@@ -516,7 +516,70 @@ class TagCloudViewModelTest {
         )
     }
 
-    /** Creates a tag through the ViewModel and hands back the stored one. */
+    @Test
+    fun `a shipping build offers no way to purge a tag`() = runTest(dispatcher) {
+        // The ViewModel under test is built with the default repository.
+        assertFalse(viewModel.uiState.value.canPurgeTags)
+    }
+
+    @Test
+    fun `purging asks first and does nothing until it is confirmed`() = runTest(dispatcher) {
+        val viewModel = debugViewModel()
+        val tag = addTag(viewModel, "Coffee")
+        viewModel.onTagClick(tag)
+        advanceUntilIdle()
+
+        viewModel.onPurgeClick(tag)
+
+        // Unlike deleting an empty tag, this one asks: history is about to go.
+        assertEquals(tag, viewModel.uiState.value.purgingTag)
+        assertNull(viewModel.uiState.value.menuTagId)
+        assertEquals(1, database.entryDao().countForTag(tag.id))
+
+        viewModel.onDismissPurgeDialog()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.purgingTag)
+        assertEquals(1, database.entryDao().countForTag(tag.id))
+        assertEquals(listOf("Coffee"), viewModel.uiState.value.tags.map { it.name })
+    }
+
+    @Test
+    fun `confirming a purge takes the tag and its entries`() = runTest(dispatcher) {
+        val viewModel = debugViewModel()
+        val tag = addTag(viewModel, "Coffee")
+        val kept = addTag(viewModel, "Tea")
+        viewModel.onTagClick(tag)
+        viewModel.onTagClick(tag)
+        viewModel.onTagClick(kept)
+        advanceUntilIdle()
+
+        viewModel.onPurgeClick(tag)
+        viewModel.onConfirmPurge()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.purgingTag)
+        assertEquals(listOf("Tea"), viewModel.uiState.value.tags.map { it.name })
+        assertEquals(0, database.entryDao().countForTag(tag.id))
+        // Only the named tag's history goes.
+        assertEquals(1, database.entryDao().countForTag(kept.id))
+    }
+
+    /** A ViewModel wired the way a debug build wires it. */
+    private fun debugViewModel() = TagCloudViewModel(
+        tagRepository = TagRepository(database.tagDao(), canPurgeTags = true),
+        entryRepository = EntryRepository(database.entryDao()) { NOW },
+    )
+
+    /** Creates a tag through [target] and hands back the stored one. */
+    private fun TestScope.addTag(target: TagCloudViewModel, name: String): Tag {
+        target.onAddTagClick()
+        target.onDraftNameChange(name)
+        target.onConfirmAddTag()
+        advanceUntilIdle()
+        return target.uiState.value.tags.single { it.name == name }
+    }
+
     private fun TestScope.addTag(name: String): Tag {
         viewModel.onAddTagClick()
         viewModel.onDraftNameChange(name)

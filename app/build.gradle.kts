@@ -37,14 +37,39 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
+    // Google's dependency metadata block is a Protobuf blob signed by Google
+    // that AGP staples into the APK. F-Droid's scanner rejects it: it is not
+    // built from source and it is not reproducible. Nothing in the app reads it.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     buildFeatures {
         compose = true
+        // For BuildConfig.DEBUG, which is what decides whether a tag may be
+        // deleted together with its history. Off by default since AGP 8.
+        buildConfig = true
     }
 
     testOptions {
         // Robolectric needs the merged Android resources to run DAO tests on the JVM.
         unitTests.isIncludeAndroidResources = true
     }
+}
+
+// FdroidMetadataTest checks the store listing and the version code, and neither
+// the fastlane directory nor this build script counts as an input of a test
+// task. Without declaring them, dropping a screenshot or overrunning a
+// description leaves the task UP-TO-DATE: the check does not run, and the build
+// stays green for the wrong reason.
+tasks.withType<Test>().configureEach {
+    inputs.dir(layout.projectDirectory.dir("../fastlane/metadata/android"))
+        .withPropertyName("fdroidListing")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("build.gradle.kts"))
+        .withPropertyName("moduleBuildScript")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 
 kotlin {

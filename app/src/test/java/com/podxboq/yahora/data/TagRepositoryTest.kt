@@ -274,6 +274,51 @@ class TagRepositoryTest {
         assertTrue(repository.observeTags().first().isEmpty())
     }
 
+    @Test
+    fun `purging a tag discards its entries along with it`() = runTest {
+        val purging = TagRepository(database.tagDao(), canPurgeTags = true)
+        val id = createdId(purging.addTag("Coffee"))
+        database.entryDao().insert(Entry(tagId = id, timestamp = 1_700_000_000_000))
+        database.entryDao().insert(Entry(tagId = id, timestamp = 1_700_000_060_000))
+
+        assertEquals(PurgeTagResult.Purged, purging.purgeTag(id))
+
+        assertTrue(purging.observeTags().first().isEmpty())
+        assertEquals(0, database.entryDao().countForTag(id))
+    }
+
+    @Test
+    fun `purging is refused in a build that does not allow it`() = runTest {
+        val id = createdId(repository.addTag("Coffee"))
+        database.entryDao().insert(Entry(tagId = id, timestamp = 1_700_000_000_000))
+
+        // The default repository is the one that ships.
+        assertEquals(PurgeTagResult.NotPermitted, repository.purgeTag(id))
+
+        assertEquals(listOf("Coffee"), repository.observeTags().first().map { it.name })
+        assertEquals(1, database.entryDao().countForTag(id))
+    }
+
+    @Test
+    fun `allowing purges does not soften the ordinary delete`() = runTest {
+        val purging = TagRepository(database.tagDao(), canPurgeTags = true)
+        val id = createdId(purging.addTag("Coffee"))
+        database.entryDao().insert(Entry(tagId = id, timestamp = 1_700_000_000_000))
+
+        // Discarding history stays something the user has to ask for by name.
+        assertEquals(DeleteTagResult.HasEntries, purging.deleteTag(id))
+        assertEquals(1, database.entryDao().countForTag(id))
+    }
+
+    @Test
+    fun `purging a tag that has no entries works like a delete`() = runTest {
+        val purging = TagRepository(database.tagDao(), canPurgeTags = true)
+        val id = createdId(purging.addTag("Coffee"))
+
+        assertEquals(PurgeTagResult.Purged, purging.purgeTag(id))
+        assertTrue(purging.observeTags().first().isEmpty())
+    }
+
     private fun createdId(result: AddTagResult): Long =
         (result as AddTagResult.Created).id
 }

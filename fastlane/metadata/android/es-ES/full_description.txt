@@ -1,0 +1,37 @@
+Yahora es un registro de eventos minimalista. Le pones nombre a algo que te pasa
+a menudo y, a partir de ahí, un solo toque sobre su etiqueta anota la fecha y la
+hora en que ha ocurrido. Sin pantallas intermedias, sin diálogos de
+confirmación, sin campos que rellenar.
+
+Casi todas las aplicaciones para llevar la cuenta de algo acaban convertidas en
+cuadernos de notas: categorías anidadas, campos a medida, recordatorios,
+estadísticas. Yahora renuncia a eso a propósito. Una etiqueta tiene un nombre y
+una marca de favorita; una entrada tiene una fecha y hora. Ese es el modelo
+entero, y de ahí sale el objetivo de diseño: registrar algo debe costar un toque
+y ninguna atención.
+
+<b>Qué hace</b>
+
+* Nube de etiquetas — las fichas fluyen por la pantalla, cada una tan ancha como
+  su nombre y todas con el mismo tamaño de letra, ordenadas alfabéticamente. Las
+  favoritas llevan una estrella, que cambia el énfasis pero nunca el orden.
+* Registro de un toque — un toque corto anota el instante actual de inmediato,
+  con un pulso háptico como confirmación, y ofrece deshacerlo desde su propio
+  aviso.
+* Pulsación larga para todo lo demás — renombrar una etiqueta, marcarla como
+  favorita o ver su historial. Lo que no aplica se oculta, no se muestra
+  desactivado.
+* Historial en árbol — meses, luego días y luego cada entrada con su HH:mm:ss.
+  Cada rama dice cuántos elementos contiene.
+* Segura por construcción — una etiqueta con entradas no se puede borrar, así
+  que un historial nunca se pierde por descuido.
+
+<b>Privacidad</b>
+
+Yahora funciona completamente sin conexión. No declara el permiso de red, así
+que no puede llegar a internet ni por accidente: sin cuentas, sin analítica, sin
+publicidad y sin bibliotecas de terceros más allá de las del propio Android.
+Todo lo que registras se queda en la base de datos privada de la aplicación, en
+tu dispositivo.
+
+Yahora es software libre bajo la Licencia Pública General de GNU v3 o posterior.

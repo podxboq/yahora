@@ -24,6 +24,7 @@
     <string name="tag_menu_view_entries">Ver registros</string>
     <string name="tag_menu_rename">Renombrar</string>
     <string name="tag_menu_delete">Borrar</string>
+    <string name="tag_menu_purge">Borrar con sus registros</string>
     <string name="tag_menu_favorite">Marcar como favorita</string>
     <string name="tag_menu_unfavorite">Quitar de favoritas</string>
 
@@ -36,6 +37,8 @@
     <string name="delete_entry_dialog_title">¿Borrar este registro?</string>
     <string name="delete_entry_dialog_text">Se registró a las %1$s. No se puede deshacer.</string>
     <string name="action_delete">Borrar</string>
+    <string name="purge_tag_dialog_title">¿Borrar %1$s y sus registros?</string>
+    <string name="purge_tag_dialog_text">Se borrarán todos los registros de la etiqueta. No se puede deshacer.</string>
     <string name="tag_detail_expand">Desplegar</string>
     <string name="tag_detail_collapse">Plegar</string>
     <string name="month_year_pattern">LLLL \'de\' yyyy</string>

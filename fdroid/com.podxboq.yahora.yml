@@ -1,0 +1,48 @@
+# Yahora's build recipe for F-Droid.
+#
+# This file does not belong to this repository as far as F-Droid is concerned:
+# it lives in fdroiddata, at metadata/com.podxboq.yahora.yml, and reaches
+# F-Droid as a merge request there. The copy is kept here so the recipe is
+# reviewed alongside the build it describes, and so bumping a version does not
+# start from a blank page.
+#
+# To submit or update a release:
+#
+#   git clone https://gitlab.com/<your-fork>/fdroiddata
+#   cp fdroid/com.podxboq.yahora.yml fdroiddata/metadata/com.podxboq.yahora.yml
+#   cd fdroiddata
+#   fdroid lint com.podxboq.yahora
+#   fdroid rewritemeta com.podxboq.yahora
+#   fdroid build com.podxboq.yahora   # needs the buildserver
+#
+# then commit as "New App: com.podxboq.yahora" (or "Update com.podxboq.yahora
+# to <version>") and open the merge request.
+#
+# Summary and Description are deliberately absent: with the fastlane metadata
+# present in this repository, F-Droid takes the listing from there, and a copy
+# in this file would only go stale.
+
+Categories:
+  - Time
+License: GPL-3.0-or-later
+AuthorName: podxboq
+AuthorEmail: podxboq@gmail.com
+SourceCode: https://github.com/podxboq/yahora
+IssueTracker: https://github.com/podxboq/yahora/issues
+Changelog: https://github.com/podxboq/yahora/releases
+
+RepoType: git
+Repo: https://github.com/podxboq/yahora.git
+
+Builds:
+  - versionName: 0.1.0
+    versionCode: 1
+    commit: v0.1.0
+    subdir: app
+    gradle:
+      - yes
+
+AutoUpdateMode: Version v%v
+UpdateCheckMode: Tags
+CurrentVersion: 0.1.0
+CurrentVersionCode: 1

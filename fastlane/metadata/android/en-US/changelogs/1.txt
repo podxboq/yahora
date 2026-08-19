@@ -1,0 +1,7 @@
+First release.
+
+Tag cloud with one-tap logging and undo, long press for rename, favourite and
+history, and a collapsible tree of months, days and entries. An entry can be
+deleted for a short while after it was logged, in case of a slip of the finger.
+
+Fully offline: no network permission, no accounts, no analytics.

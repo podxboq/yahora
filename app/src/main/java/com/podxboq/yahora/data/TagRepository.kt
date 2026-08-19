@@ -37,6 +37,15 @@ sealed interface DeleteTagResult {
     data object HasEntries : DeleteTagResult
 }
 
+/** Outcome of trying to delete a tag *and* the history it holds. */
+sealed interface PurgeTagResult {
+    /** Tag and entries are gone — including when the tag already was. */
+    data object Purged : PurgeTagResult
+
+    /** This build does not offer the action at all. */
+    data object NotPermitted : PurgeTagResult
+}
+
 /** Outcome of trying to rename a tag. */
 sealed interface RenameTagResult {
     data object Renamed : RenameTagResult
@@ -48,7 +57,19 @@ sealed interface RenameTagResult {
     data object TagNotFound : RenameTagResult
 }
 
-class TagRepository(private val tagDao: TagDao) {
+/**
+ * @param canPurgeTags whether this build may discard a tag's history along with
+ *   the tag. Debug builds pass `true` so a session of trying the app out can be
+ *   cleaned up; the shipping app never does, and the default is what ships.
+ *
+ *   Injected rather than read from `BuildConfig` here, for the same reason the
+ *   clock is: a test pins it instead of inheriting whatever the build happened
+ *   to be.
+ */
+class TagRepository(
+    private val tagDao: TagDao,
+    val canPurgeTags: Boolean = false,
+) {
 
     fun observeTags(): Flow<List<Tag>> = tagDao.observeAll()
 
@@ -94,6 +115,23 @@ class TagRepository(private val tagDao: TagDao) {
         } catch (_: SQLiteConstraintException) {
             DeleteTagResult.HasEntries
         }
+
+    /**
+     * Deletes a tag *and every entry it holds*. The only operation in the app
+     * that discards history, and the reason it is gated: `deleteTag` refuses a
+     * tag with entries, and that refusal is a product decision, not an obstacle
+     * to route around. What this exists for is the developer's own device,
+     * where trying the app out leaves records that were never real.
+     *
+     * Not offered at all when [canPurgeTags] is false — the check lives here
+     * rather than only in the menu, so a build that ships cannot reach it
+     * through some other caller.
+     */
+    suspend fun purgeTag(id: Long): PurgeTagResult {
+        if (!canPurgeTags) return PurgeTagResult.NotPermitted
+        tagDao.purgeById(id)
+        return PurgeTagResult.Purged
+    }
 
     /**
      * Gives an existing tag a new name, under the same rules that govern

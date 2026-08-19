@@ -398,6 +398,103 @@ class TagCloudContentTest {
         composeRule.onNodeWithText("Mark as favorite").assertDoesNotExist()
     }
 
+    @Test
+    fun `a shipping build never offers to discard a tag's history`() {
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    tags = listOf(coffee),
+                    menuTagId = coffee.id,
+                    tagIdsWithEntries = setOf(coffee.id),
+                    canPurgeTags = false,
+                ),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("Delete with its entries").assertDoesNotExist()
+        // The ordinary pair is untouched by the debug action existing at all.
+        composeRule.onNodeWithText("Delete").assertDoesNotExist()
+        composeRule.onNodeWithText("View entries").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a debug build offers to discard the history of a tag that has some`() {
+        var purged: Tag? = null
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    tags = listOf(coffee),
+                    menuTagId = coffee.id,
+                    tagIdsWithEntries = setOf(coffee.id),
+                    canPurgeTags = true,
+                ),
+                callbacks = noopCallbacks.copy(onPurgeClick = { purged = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Delete with its entries").performClick()
+
+        assert(purged == coffee) { "Expected the purge action to report the tag, was $purged" }
+    }
+
+    @Test
+    fun `a tag with no entries keeps the plain delete even in a debug build`() {
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    tags = listOf(coffee),
+                    menuTagId = coffee.id,
+                    canPurgeTags = true,
+                ),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        // There is no history to discard, so the destructive wording would lie.
+        composeRule.onNodeWithText("Delete").assertIsDisplayed()
+        composeRule.onNodeWithText("Delete with its entries").assertDoesNotExist()
+    }
+
+    @Test
+    fun `discarding a tag's history is confirmed first`() {
+        var confirmed = false
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    tags = listOf(coffee),
+                    canPurgeTags = true,
+                    purgingTag = coffee,
+                ),
+                callbacks = noopCallbacks.copy(onConfirmPurge = { confirmed = true }),
+            )
+        }
+
+        // The dialog names the tag, so a mis-tap is caught before it lands.
+        composeRule.onNodeWithText("Delete Coffee and its entries?").assertIsDisplayed()
+        composeRule.onNodeWithText("Cancel").assertIsDisplayed()
+        composeRule.onNodeWithText("Delete").performClick()
+
+        assert(confirmed) { "Expected confirming the dialog to report it" }
+    }
+
+    @Test
+    fun `no purge dialog until a tag is being purged`() {
+        val coffee = Tag(id = 1, name = "Coffee")
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(coffee), canPurgeTags = true),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("Cancel").assertDoesNotExist()
+    }
+
     private val noopCallbacks = TagCloudCallbacks(
         onAddTagClick = {},
         onDraftNameChange = {},
@@ -412,5 +509,8 @@ class TagCloudContentTest {
         onDismissRenameDialog = {},
         onDeleteClick = {},
         onToggleFavorite = {},
+        onPurgeClick = {},
+        onConfirmPurge = {},
+        onDismissPurgeDialog = {},
     )
 }

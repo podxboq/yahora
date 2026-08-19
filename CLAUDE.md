@@ -274,3 +274,54 @@ instrumented tests for what genuinely needs a device.
   the round caps, which extend each stroke by half its width past its endpoint.
   Measuring the path endpoints alone is the classic way to ship an icon whose
   tips get clipped by the launcher mask.
+
+## Releasing on F-Droid
+
+F-Droid builds the app from this repository and signs it itself, so a release is
+a git tag plus the data F-Droid reads around it. Seven things are easy to break
+without the build noticing:
+
+- **The listing lives in `fastlane/metadata/android/<locale>/`**, not in the
+  build recipe. `fdroid/com.podxboq.yahora.yml` therefore has no `Summary` or
+  `Description` on purpose — a second copy would go stale. Adding a locale means
+  adding a directory *and* its entry in `FdroidMetadataTest`, never touching
+  Kotlin.
+- **Every `versionCode` needs a changelog** at `changelogs/<versionCode>.txt` in
+  every locale, and `versionCode` only ever goes up. The test reads the version
+  code out of `app/build.gradle.kts`, so bumping one without the other fails in
+  the fast suite instead of in the merge request days later.
+- **The tag is `v<versionName>`** — `v0.1.0` for `versionName = "0.1.0"` —
+  because the recipe says `AutoUpdateMode: Version v%v`. A tag that does not
+  match that pattern silently stops the automatic release detection. Tags are
+  annotated, and signing them is what lets F-Droid verify who cut the release.
+- **`dependenciesInfo` stays disabled.** AGP otherwise staples a Google-signed
+  Protobuf blob into the APK, which F-Droid's scanner rejects: it is not built
+  from source and not reproducible.
+- **`fastlane/.../images/icon.png` is generated**, by
+  `tools/render-listing-icon.py`, from the launcher icon's own drawables. Redraw
+  the launcher icon and re-run it; hand-editing the PNG is how the listing ends
+  up showing an icon the app no longer has. The script crops the middle 72dp of
+  the 108dp adaptive canvas, which is the part a launcher actually shows.
+- **Screenshots are cropped before they are committed**, by
+  `tools/crop-screenshot.py`, which takes the status and navigation bars off:
+  what belongs in the listing is the app, not the clock, battery and unread
+  icons of whoever held the phone — details that date the listing and differ
+  between the two locales' captures even when the app is showing the same
+  screen. The crop is not measured by eye; the script asks the connected device
+  for its own non-decor insets and pulls the height from there, so the app's
+  first and last pixel rows survive. It writes PNG even from a JPEG capture,
+  since cropping re-encodes and flat colour with thin type is where a second
+  round of JPEG shows. The test pins the result: one portrait frame, identical
+  across every screenshot of every locale.
+- **The listing is checked by a test Gradle would otherwise skip.** Everything
+  above lives outside `:app`, and files outside the module are not inputs of a
+  test task: `FdroidMetadataTest` would keep passing while the task sat
+  `UP-TO-DATE`, and a check that never runs is indistinguishable from one that
+  passes. So `app/build.gradle.kts` declares `fastlane/metadata/android` and the
+  build script itself as inputs. Screenshots are pinned there too — every locale
+  carries them, and every locale names them alike, because the listing orders
+  them by file name and matching names are what make one listing the other
+  translated rather than a different tour of the app.
+
+Release builds carry no `signingConfig` — F-Droid signs the APK, and a keystore
+must never enter this repository.

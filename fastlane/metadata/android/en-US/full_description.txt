@@ -1,0 +1,32 @@
+Yahora is a minimalist event logger. You give a recurring event a name, and from
+then on a single tap on its chip records the date and time it happened. No
+intermediate screen, no confirmation dialog, no extra fields to fill in.
+
+Most tracking apps grow into note-taking tools: nested categories, custom
+fields, reminders, statistics. Yahora deliberately does not. A tag has a name
+and a favourite flag; an entry has a timestamp. That is the entire model, and
+the design goal follows from it — recording an event should cost one tap and
+zero attention.
+
+<b>What it does</b>
+
+* Tag cloud — chips flow across the screen, each as wide as its name and all
+  sharing one type size, sorted alphabetically. Favourites are marked with a
+  star, which changes the emphasis but never the order.
+* One-tap logging — a short tap records the current timestamp right away, with
+  a haptic tick as confirmation, and offers to undo it from its own snackbar.
+* Long press for everything else — rename a tag, mark it as a favourite, or
+  browse its history. Actions that do not apply are hidden, not greyed out.
+* History as a tree — months, then days, then the individual entries at
+  HH:mm:ss. Each branch says how many children it holds.
+* Safe by construction — a tag that holds entries cannot be deleted, so a
+  history is never lost by accident.
+
+<b>Privacy</b>
+
+Yahora is fully offline. It declares no network permission, so it cannot reach
+the internet even by accident: no accounts, no analytics, no advertising and no
+third-party libraries beyond Android's own. Everything you log stays in the
+app's private database on your device.
+
+Yahora is free software under the GNU General Public License v3 or later.

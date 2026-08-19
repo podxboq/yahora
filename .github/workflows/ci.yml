@@ -1,0 +1,74 @@
+# Every specification this project has is executable: the invariants are tests,
+# the interaction rules are Compose tests under Robolectric, and the store
+# listing is FdroidMetadataTest. What was missing was anything that makes a
+# pull request run them.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+# A new push supersedes the run in flight for the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  wrapper:
+    name: Gradle wrapper
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # F-Droid builds this repository from source, and gradle-wrapper.jar is a
+      # binary nobody reads in a diff. This checks it against the published
+      # checksums instead.
+      - uses: gradle/actions/wrapper-validation@v4
+
+  build:
+    name: Tests, lint and debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The build pins its daemon to Java 21 and declares jvmToolchain(21); this
+      # gives Gradle a matching JDK instead of making it provision one.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      # compileSdk is newer than what the runner image ships, and AGP only
+      # downloads a platform whose licence is already accepted.
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-37 build-tools;37.0.0'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew test
+
+      - name: Android Lint
+        run: ./gradlew lint
+
+      # Not redundant with the tests: assembling is what exercises resource
+      # merging, KSP and the core library desugaring that java.time needs.
+      - name: Debug APK
+        run: ./gradlew assembleDebug
+
+      # The reports are what makes a red run diagnosable without reproducing the
+      # build locally.
+      - name: Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            app/build/reports/lint-results-*.html
+            app/build/reports/tests/
+          retention-days: 14
+          if-no-files-found: ignore

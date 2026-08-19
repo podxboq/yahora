@@ -290,10 +290,20 @@ without the build noticing:
   every locale, and `versionCode` only ever goes up. The test reads the version
   code out of `app/build.gradle.kts`, so bumping one without the other fails in
   the fast suite instead of in the merge request days later.
-- **The tag is `v<versionName>`** — `v0.1.0` for `versionName = "0.1.0"` —
-  because the recipe says `AutoUpdateMode: Version v%v`. A tag that does not
-  match that pattern silently stops the automatic release detection. Tags are
+- **The tag is `v<versionName>`** — `v0.1.0` for `versionName = "0.1.0"`. With
+  `AutoUpdateMode: Version`, F-Droid works the prefix out from the tag that is
+  already there, so the pattern is not spelled out in the recipe any more; what
+  matters is that the naming stays consistent from one release to the next,
+  since an inconsistent one is what stops the automatic detection. Tags are
   annotated, and signing them is what lets F-Droid verify who cut the release.
+  Signing is done with SSH, against the key registered on GitHub.
+- **Categories come from a list that changes.** F-Droid dropped the broad old
+  set — there is no `Time` any more — for a much finer one, kept in
+  `config/categories.yml` in fdroiddata. A category that is not in that file
+  fails the lint on the merge request, so check the live list rather than
+  copying one from an older recipe. Yahora is a `Habit Tracker`: what it counts
+  is how often something happens, not how long it takes, which is what a
+  `Time Tracker` measures.
 - **`dependenciesInfo` stays disabled.** AGP otherwise staples a Google-signed
   Protobuf blob into the APK, which F-Droid's scanner rejects: it is not built
   from source and not reproducible.

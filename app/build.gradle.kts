@@ -21,6 +21,31 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Signing the release with the project's own key is what lets F-Droid ship a
+    // reproducible build: it compiles this same commit, checks its APK against
+    // the published one byte for byte, and then distributes the one signed here.
+    // The alternative — letting F-Droid sign — is a door that closes behind you,
+    // and it would mean the APK on F-Droid could never be swapped for the one on
+    // any other channel without users uninstalling first.
+    //
+    // The credentials are read from Gradle properties that live outside this
+    // repository, on the maintainer's machine. A keystore must never be
+    // committed. Where they are absent — F-Droid's buildserver, CI, any clone —
+    // the release build produces an unsigned APK instead of failing, which is
+    // exactly what F-Droid wants to compare against.
+    val releaseKeystore = providers.gradleProperty("YAHORA_KEYSTORE").orNull
+
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = providers.gradleProperty("YAHORA_KEYSTORE_PASSWORD").get()
+                keyAlias = providers.gradleProperty("YAHORA_KEY_ALIAS").get()
+                keyPassword = providers.gradleProperty("YAHORA_KEY_PASSWORD").get()
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -28,6 +53,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 
@@ -69,6 +95,9 @@ tasks.withType<Test>().configureEach {
         .withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.file(layout.projectDirectory.file("build.gradle.kts"))
         .withPropertyName("moduleBuildScript")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    inputs.file(layout.projectDirectory.file("../fdroid/com.podxboq.yahora.yml"))
+        .withPropertyName("fdroidRecipe")
         .withPathSensitivity(PathSensitivity.RELATIVE)
 }
 

@@ -39,10 +39,16 @@ Repo: https://github.com/podxboq/yahora.git
 Builds:
   - versionName: 0.1.0
     versionCode: 1
-    commit: v0.1.0
+    commit: 4904e8b0131c2100ddf92e9492f84c8ab40b672d
     subdir: app
     gradle:
       - yes
+
+# The APK published on GitHub, signed with the project's own key. F-Droid
+# rebuilds this commit, compares its own APK against that one, and ships the
+# signed one when they match — so the same binary works on every channel.
+Binaries: https://github.com/podxboq/yahora/releases/download/v%v/yahora-%v.apk
+AllowedAPKSigningKeys: fe3e3ed9266315b8a49f067766a496ff83fbd0d20d28bd4c5db3525c38a134d4
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags

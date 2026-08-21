@@ -338,5 +338,24 @@ without the build noticing:
   them by file name and matching names are what make one listing the other
   translated rather than a different tour of the app.
 
-Release builds carry no `signingConfig` — F-Droid signs the APK, and a keystore
-must never enter this repository.
+Release builds are signed with the project's own key, which is what makes them
+**reproducible builds**: F-Droid rebuilds the tagged commit, compares its APK
+against the one published on GitHub, and distributes the signed one when they
+match. The same binary then works on every channel, so a user can move between
+F-Droid, a GitHub release and Play without uninstalling. Letting F-Droid sign
+instead is a door that closes behind you: it cannot be switched on afterwards.
+
+The keystore never enters this repository, and neither do its passwords. The
+build reads them from Gradle properties (`YAHORA_KEYSTORE` and friends) kept in
+`~/.gradle/gradle.properties` on the maintainer's machine. Where they are
+absent — F-Droid's buildserver, CI, a fresh clone — `signingConfigs` stays empty
+and the release build produces an unsigned APK rather than failing, which is
+precisely what F-Droid needs in order to compare.
+
+Two consequences worth stating plainly. The key is now the app's identity:
+losing it means never being able to update the published app again, so it wants
+a backup somewhere other than this machine. And the APK for a release is built
+from the tagged commit and uploaded to that tag's GitHub release as
+`yahora-<versionName>.apk`, because `Binaries:` in the recipe points there by
+name — a release without that file, or with a different name, silently stops the
+verification.

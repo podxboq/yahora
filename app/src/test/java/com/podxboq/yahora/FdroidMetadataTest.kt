@@ -196,15 +196,64 @@ class FdroidMetadataTest {
             ?.sortedBy { it.name }
             .orEmpty()
 
-    /** Reads `versionCode` out of the build script, the one place that declares it. */
-    private fun declaredVersionCode(): Int {
-        val build = File("build.gradle.kts").readText()
-        val match = Regex("""versionCode\s*=\s*(\d+)""").find(build)
+    /**
+     * The recipe kept here is the copy submitted to fdroiddata, and it repeats
+     * the version the build declares. Bumping one without the other publishes a
+     * release whose recipe describes the previous one, which F-Droid finds out
+     * long after the merge request was opened.
+     */
+    @Test
+    fun `the recipe describes the version being built`() {
+        val recipe = recipeText()
 
-        return requireNonNull(match) { "no versionCode in app/build.gradle.kts" }
-            .groupValues[1]
-            .toInt()
+        assertEquals(
+            "recipe versionName disagrees with the build",
+            declared("versionName\\s*=\\s*\"([^\"]+)\"", buildScript()),
+            declared("versionName:\\s*(\\S+)", recipe),
+        )
+        assertEquals(
+            "recipe versionCode disagrees with the build",
+            declaredVersionCode().toString(),
+            declared("versionCode:\\s*(\\d+)", recipe),
+        )
+        assertEquals(
+            "CurrentVersionCode disagrees with the build",
+            declaredVersionCode().toString(),
+            declared("CurrentVersionCode:\\s*(\\d+)", recipe),
+        )
     }
+
+    /**
+     * Reproducible builds hang on two fields agreeing with reality: F-Droid
+     * fetches the APK named by `Binaries` and refuses it unless it carries the
+     * key named by `AllowedAPKSigningKeys`. A URL that does not interpolate the
+     * version would keep pointing at the first release forever.
+     */
+    @Test
+    fun `the published binary is pinned to a signing key`() {
+        val recipe = recipeText()
+
+        val binaries = declared("Binaries:\\s*(\\S+)", recipe)
+        assertTrue("Binaries does not interpolate the version: $binaries", binaries.contains("%v"))
+
+        val key = declared("AllowedAPKSigningKeys:\\s*(\\S+)", recipe)
+        assertTrue(
+            "AllowedAPKSigningKeys is not a lowercase SHA-256: $key",
+            key.matches(Regex("[0-9a-f]{64}")),
+        )
+    }
+
+    /** The build recipe, kept beside the app it describes. */
+    private fun recipeText(): String = File("../fdroid/com.podxboq.yahora.yml").readText()
+
+    private fun buildScript(): String = File("build.gradle.kts").readText()
+
+    private fun declared(pattern: String, text: String): String =
+        requireNonNull(Regex(pattern).find(text)) { "nothing matching $pattern" }.groupValues[1]
+
+    /** Reads `versionCode` out of the build script, the one place that declares it. */
+    private fun declaredVersionCode(): Int =
+        declared("""versionCode\s*=\s*(\d+)""", buildScript()).toInt()
 
     /** The IHDR chunk of a PNG: width and height as big-endian ints at byte 16. */
     private fun pngSize(file: File): Pair<Int, Int> {

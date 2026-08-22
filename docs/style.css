@@ -1,0 +1,90 @@
+/* Yahora project pages — Copyright (C) 2026 podxboq. GPL-3.0-or-later. */
+
+:root {
+  --bg: #fbfaf7;
+  --surface: #ffffff;
+  --ink: #1b1a17;
+  --ink-soft: #55524b;
+  --rule: #e3ded4;
+  --accent: #8a5a00;
+  --measure: 36rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14130f;
+    --surface: #1c1b17;
+    --ink: #eeeae1;
+    --ink-soft: #b0aa9d;
+    --rule: #33302a;
+    --accent: #e0a83c;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 3rem 1.25rem 5rem;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 1rem/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+main { max-width: var(--measure); margin: 0 auto; }
+
+header.masthead {
+  max-width: var(--measure);
+  margin: 0 auto 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+header.masthead img { width: 72px; height: 72px; display: block; margin-bottom: 1rem; }
+
+h1 { font-size: 1.75rem; line-height: 1.25; margin: 0 0 .35rem; letter-spacing: -.01em; }
+h2 { font-size: 1.1rem; margin: 2.5rem 0 .6rem; letter-spacing: -.005em; }
+
+p, ul { margin: 0 0 1rem; }
+ul { padding-left: 1.25rem; }
+li { margin-bottom: .4rem; }
+
+a { color: var(--accent); text-underline-offset: .18em; }
+a:hover { text-decoration-thickness: 2px; }
+
+.subtitle { color: var(--ink-soft); margin: 0; }
+
+.meta {
+  color: var(--ink-soft);
+  font-size: .875rem;
+  margin: 0 0 2rem;
+}
+
+.callout {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 1rem 1.15rem;
+  margin: 0 0 1rem;
+}
+
+.callout p:last-child { margin-bottom: 0; }
+
+.lang {
+  font-size: .875rem;
+  color: var(--ink-soft);
+  margin: 0 0 2rem;
+}
+
+footer {
+  max-width: var(--measure);
+  margin: 4rem auto 0;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-soft);
+  font-size: .875rem;
+}
+
+footer p { margin: 0 0 .5rem; }

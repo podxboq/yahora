@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Política de privacidad — Yahora</title>
+<meta name="description" content="Política de privacidad de Yahora, un registro de eventos minimalista y sin conexión para Android. Yahora no recoge ningún dato.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <img src="icon.png" alt="" width="72" height="72">
+  <h1>Política de privacidad</h1>
+  <p class="subtitle">Yahora — un registro de eventos minimalista para Android</p>
+</header>
+
+<main>
+
+<p class="lang">This policy is also available <a href="privacy.html" hreflang="en">in English</a>.</p>
+
+<p class="meta">
+  Se aplica a la aplicación de Android <strong>Yahora</strong>
+  (paquete <code>com.podxboq.yahora</code>), publicada por <strong>podxboq</strong>.<br>
+  Última actualización: 22 de agosto de 2026.
+</p>
+
+<div class="callout">
+  <p><strong>Yahora no recoge ningún dato.</strong> No tiene cuentas, ni
+  analítica, ni publicidad, ni informes de fallos, ni rastreadores de terceros.
+  Ni siquiera pide permiso para usar la red, así que no puede enviar nada a
+  ninguna parte: ni a propósito, ni por accidente.</p>
+</div>
+
+<h2>Qué guarda la aplicación</h2>
+
+<p>Todo lo que registras en Yahora se queda en una base de datos privada de tu
+propio dispositivo, dentro del área de almacenamiento de la aplicación, que el
+sistema Android mantiene aislada de las demás. Esos datos son exactamente dos
+cosas:</p>
+
+<ul>
+  <li>los <strong>nombres de las etiquetas</strong> que creas y si cada una está
+  marcada como favorita;</li>
+  <li>la <strong>fecha y la hora</strong> de cada entrada que anotas al tocar una
+  etiqueta.</li>
+</ul>
+
+<p>No se registra nada más. Yahora no lee tus contactos, ni tu ubicación, ni tus
+archivos, ni tus cuentas, ni los identificadores de tu dispositivo, y no tiene
+ningún campo en el que pueda introducirse información personal más allá del
+nombre de una etiqueta, que eliges tú.</p>
+
+<h2>Qué sale de tu dispositivo</h2>
+
+<p>Nada. La aplicación no declara ningún permiso en su manifiesto —tampoco
+<code>android.permission.INTERNET</code>—, de modo que es el propio sistema
+operativo el que le impide abrir una conexión de red. Detrás de Yahora no hay
+ningún servidor, y quien la desarrolla no tiene forma de ver lo que anotas.</p>
+
+<h2>La copia de seguridad de Android</h2>
+
+<p>Yahora permite que el mecanismo estándar de copia de seguridad de Android
+incluya sus datos, para que tu historial sobreviva a un cambio de teléfono. Por
+eso, si tienes activada la copia de seguridad en los ajustes de tu dispositivo,
+el sistema puede copiar la base de datos de la aplicación a <em>tu</em> cuenta de
+Google, cifrada de extremo a extremo con una clave derivada de las credenciales
+de tu dispositivo. Esa transferencia ocurre entre tú, tu dispositivo y Google,
+bajo la <a href="https://policies.google.com/privacy" rel="noopener">política de
+privacidad de Google</a>: quien desarrolla Yahora no interviene en ella ni tiene
+acceso al resultado. Puedes desactivarla en los ajustes de copia de seguridad de
+tu dispositivo.</p>
+
+<h2>Permisos</h2>
+
+<p>Ninguno. Yahora no solicita permisos en tiempo de ejecución ni declara
+ninguno en su manifiesto.</p>
+
+<h2>Terceros</h2>
+
+<p>Yahora no incluye ningún SDK de publicidad, ni de analítica, ni servicio de
+terceros de ninguna clase. Las únicas bibliotecas con las que está construida
+son componentes Jetpack del propio Android (Compose, Room y Lifecycle), que
+funcionan localmente y no envían nada a ninguna parte.</p>
+
+<h2>Menores</h2>
+
+<p>Yahora no está dirigida especialmente a menores, y para ellos es igual de
+segura: como no recoge nada de nadie, tampoco recoge nada de un menor.</p>
+
+<h2>Cómo borrar tus datos</h2>
+
+<p>Como tus datos nunca salen de tu dispositivo, eres la única persona que los
+tiene, y eliminarlos no requiere pedírselo a nadie. Borrar el almacenamiento de
+la aplicación (Ajustes → Aplicaciones → Yahora → Almacenamiento → Borrar datos) o
+desinstalarla elimina todo lo que haya registrado. Si tienes activada la copia de
+seguridad de Android, recuerda que puede quedar una copia en tu propia cuenta de
+Google hasta que la borres allí.</p>
+
+<h2>Cambios en esta política</h2>
+
+<p>Si esta política llegara a cambiar, la versión revisada se publicará en esta
+misma dirección y se actualizará su fecha. La página vive en el repositorio
+público de código de la aplicación, así que todas las revisiones que haya tenido
+quedan registradas en el historial de git del proyecto.</p>
+
+<h2>Contacto</h2>
+
+<p>Las dudas sobre esta política, o sobre el tratamiento que Yahora hace de tus
+datos, se plantean mejor como una incidencia en el repositorio público del
+proyecto:
+<a href="https://github.com/podxboq/yahora/issues" rel="noopener">github.com/podxboq/yahora/issues</a>.</p>
+
+</main>
+
+<footer>
+  <p>Yahora es software libre, bajo la
+  <a href="https://www.gnu.org/licenses/gpl-3.0.html" rel="noopener">Licencia
+  Pública General de GNU v3 o posterior</a>. Su código fuente completo está en
+  <a href="https://github.com/podxboq/yahora" rel="noopener">github.com/podxboq/yahora</a>.</p>
+</footer>
+
+</body>
+</html>

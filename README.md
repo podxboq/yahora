@@ -44,7 +44,10 @@ additional fields on an entry are explicitly not part of the design.
 ## Tech stack
 
 Kotlin, Jetpack Compose with Material 3, and Room for local storage. The app is
-fully offline: no network access, no accounts, no telemetry.
+fully offline: no network access, no accounts, no telemetry. The
+[privacy policy](https://podxboq.github.io/yahora/privacy.html)
+([español](https://podxboq.github.io/yahora/privacidad.html)) states that in
+full.
 
 ## Building
 
@@ -82,6 +85,12 @@ nothing to show. `tools/seed-demo-data.py` is the quickest way to get one — a
 fixed-seed history, so the same run weeks later still matches the screenshots it
 produced. They are then cropped with `tools/crop-screenshot.py`, which takes the
 phone's status and navigation bars off.
+
+The project pages at <https://podxboq.github.io/yahora/> are served by GitHub
+Pages from `docs/` in this repository, and exist because Google Play asks for
+the privacy policy as a live URL rather than a file. Editing the policy means
+editing `docs/privacy.html` and its Spanish counterpart, never a copy kept
+somewhere else.
 
 `fdroid/com.podxboq.yahora.yml` is the build recipe F-Droid needs. It is kept
 here for review, but F-Droid reads its own copy in

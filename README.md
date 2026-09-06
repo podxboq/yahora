@@ -71,9 +71,11 @@ The store listing lives in this repository, under
 `fastlane/metadata/android/<locale>/`, which is where F-Droid reads it from —
 description, changelog per version code, icon and screenshots. Its limits are
 checked by `FdroidMetadataTest`, so an over-long description fails the build
-rather than the merge request. The listing icon is not drawn by hand:
-`tools/render-listing-icon.py` rasterises it from the launcher icon's own
-drawables.
+rather than the merge request. Neither of the two drawn assets is made by hand:
+`tools/render-listing-icon.py` rasterises the icon from the launcher icon's own
+drawables, and `tools/render-feature-graphic.py` composes the 1024x500 feature
+graphic Google Play asks for from that same vector plus each locale's title and
+tagline.
 
 Screenshots come from a real device carrying a history that was written into a
 debug build's database: the tree groups entries by month and day, and timestamps

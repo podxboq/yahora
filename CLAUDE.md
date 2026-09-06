@@ -317,6 +317,15 @@ without the build noticing:
   the launcher icon and re-run it; hand-editing the PNG is how the listing ends
   up showing an icon the app no longer has. The script crops the middle 72dp of
   the 108dp adaptive canvas, which is the part a launcher actually shows.
+- **`fastlane/.../images/featureGraphic.png` is generated too**, by
+  `tools/render-feature-graphic.py`, and is the one listing asset F-Droid never
+  asks for: Play requires it, at exactly 1024x500. It repeats nothing — the
+  drawing comes from the launcher icon's vector, the name from `title.txt` and
+  the tagline from the first sentence of `short_description.txt` — so redrawing
+  the icon or rewording the tagline means re-running it. Unlike the icon it is
+  per-locale, because the tagline is. It carries no badge, no device frame and
+  no screenshot inside it: Play rejects graphics that imitate its own UI, and a
+  banner is only ever read at a glance.
 - **Screenshots are cropped before they are committed**, by
   `tools/crop-screenshot.py`, which takes the status and navigation bars off:
   what belongs in the listing is the app, not the clock, battery and unread

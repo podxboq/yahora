@@ -6,7 +6,9 @@ Most tracking apps grow into note-taking tools: nested categories, custom
 fields, reminders, statistics. Yahora deliberately does not. A tag has a name
 and a favourite flag; an entry has a timestamp. That is the entire model, and
 the design goal follows from it — recording an event should cost one tap and
-zero attention.
+zero attention. That simplicity is the point, not a step on the way to
+something bigger: nothing here is designed to keep you in the app or to
+bring you back to it.
 
 <b>What it does</b>
 

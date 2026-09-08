@@ -8,7 +8,9 @@ cuadernos de notas: categorías anidadas, campos a medida, recordatorios,
 estadísticas. Yahora renuncia a eso a propósito. Una etiqueta tiene un nombre y
 una marca de favorita; una entrada tiene una fecha y hora. Ese es el modelo
 entero, y de ahí sale el objetivo de diseño: registrar algo debe costar un toque
-y ninguna atención.
+y ninguna atención. Esa sencillez es justo el punto, no una etapa camino de
+algo más grande: aquí no hay nada diseñado para retenerte en la aplicación ni
+para hacerte volver.
 
 <b>Qué hace</b>
 

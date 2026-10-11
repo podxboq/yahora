@@ -23,7 +23,12 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -31,6 +36,7 @@ import androidx.compose.ui.test.performTouchInput
 import com.podxboq.yahora.data.Backup
 import com.podxboq.yahora.data.Entry
 import com.podxboq.yahora.data.Tag
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -542,6 +548,64 @@ class TagCloudContentTest {
         assert(confirmed) { "Expected the restore to be confirmed" }
     }
 
+    @Test
+    fun `an uncoloured tag offers a colour, a coloured one offers to remove it`() {
+        val plain = Tag(id = 1, name = "Coffee")
+        val coloured = Tag(id = 2, name = "Tea", color = 0xFF43A047.toInt())
+        var menuFor by mutableStateOf<Long?>(plain.id)
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(tags = listOf(plain, coloured), menuTagId = menuFor),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithText("Color").assertIsDisplayed()
+        composeRule.onNodeWithText("Remove color").assertDoesNotExist()
+
+        menuFor = coloured.id
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithText("Remove color").assertIsDisplayed()
+        composeRule.onNodeWithText("Color").assertDoesNotExist()
+    }
+
+    @Test
+    fun `a hex code typed in the picker is the colour applied`() {
+        var applied: Int? = null
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(
+                    tags = listOf(Tag(id = 1, name = "Coffee")),
+                    colouringTag = Tag(id = 1, name = "Coffee"),
+                ),
+                callbacks = noopCallbacks.copy(onConfirmColor = { applied = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Color for Coffee").assertIsDisplayed()
+        composeRule.onNode(hasSetTextAction()).performTextReplacement("2e7d32")
+        composeRule.onNodeWithText("Apply").performClick()
+
+        assertEquals(0xFF2E7D32.toInt(), applied)
+    }
+
+    @Test
+    fun `a swatch picked in the picker is the colour applied`() {
+        var applied: Int? = null
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(colouringTag = Tag(id = 1, name = "Coffee")),
+                callbacks = noopCallbacks.copy(onConfirmColor = { applied = it }),
+            )
+        }
+
+        composeRule.onNodeWithContentDescription("Color #1E88E5").performClick()
+        composeRule.onNodeWithText("Apply").performClick()
+
+        assertEquals(0xFF1E88E5.toInt(), applied)
+    }
+
     private val noopCallbacks = TagCloudCallbacks(
         onAddTagClick = {},
         onDraftNameChange = {},
@@ -559,6 +623,10 @@ class TagCloudContentTest {
         onPurgeClick = {},
         onConfirmPurge = {},
         onDismissPurgeDialog = {},
+        onColorClick = {},
+        onConfirmColor = {},
+        onDismissColorDialog = {},
+        onRemoveColor = {},
         onSaveBackupClick = {},
         onRestoreClick = {},
         onConfirmRestore = {},

@@ -69,8 +69,11 @@ object BackupFormat {
     /**
      * Bumped whenever the shape changes. A version may read every earlier one;
      * a later one is refused rather than half-understood.
+     *
+     * 1. Tags, favourites and entries.
+     * 2. An optional colour per tag, as `#AARRGGBB`.
      */
-    const val VERSION = 1
+    const val VERSION = 2
 
     /**
      * Largest file read into memory. Far beyond any real log — a million entries
@@ -82,12 +85,14 @@ object BackupFormat {
     fun write(backup: Backup, output: OutputStream) {
         val tags = JSONArray()
         backup.tags.forEach { tag ->
-            tags.put(
-                JSONObject()
-                    .put("id", tag.id)
-                    .put("name", tag.name)
-                    .put("favorite", tag.isFavorite),
-            )
+            val tagJson = JSONObject()
+                .put("id", tag.id)
+                .put("name", tag.name)
+                .put("favorite", tag.isFavorite)
+            // Hex rather than the raw Int: ARGB with alpha set is negative as a
+            // signed integer, and nobody reading the file would recognise it.
+            tag.color?.let { tagJson.put("color", "#%08X".format(it)) }
+            tags.put(tagJson)
         }
         val entries = JSONArray()
         backup.entries.forEach { entry ->
@@ -132,6 +137,8 @@ object BackupFormat {
                         id = tag.getLong("id"),
                         name = tag.getString("name"),
                         isFavorite = tag.getBoolean("favorite"),
+                        // Absent in version 1, and on any tag without one.
+                        color = if (tag.has("color")) parseColor(tag.getString("color")) else null,
                     )
                 },
                 entries = json.getJSONArray("entries").objects().map { entry ->
@@ -181,6 +188,13 @@ object BackupFormat {
             if (buffer.size() > limit) fail(BackupProblem.NOT_A_BACKUP, "larger than $limit bytes")
         }
     }
+
+    private fun parseColor(text: String): Int {
+        if (!COLOR.matches(text)) fail(BackupProblem.DAMAGED, "colour $text")
+        return text.substring(1).toLong(16).toInt()
+    }
+
+    private val COLOR = Regex("#[0-9A-Fa-f]{8}")
 
     private fun JSONArray.objects(): List<JSONObject> = List(length()) { getJSONObject(it) }
 

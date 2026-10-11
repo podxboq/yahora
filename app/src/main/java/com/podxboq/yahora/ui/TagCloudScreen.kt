@@ -24,6 +24,7 @@ import android.view.HapticFeedbackConstants
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -70,6 +71,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -109,6 +111,10 @@ data class TagCloudCallbacks(
     val onPurgeClick: (Tag) -> Unit,
     val onConfirmPurge: () -> Unit,
     val onDismissPurgeDialog: () -> Unit,
+    val onColorClick: (Tag) -> Unit,
+    val onConfirmColor: (Int) -> Unit,
+    val onDismissColorDialog: () -> Unit,
+    val onRemoveColor: (Tag) -> Unit,
     val onSaveBackupClick: () -> Unit,
     val onRestoreClick: () -> Unit,
     val onConfirmRestore: () -> Unit,
@@ -174,6 +180,10 @@ fun TagCloudScreen(
             onPurgeClick = viewModel::onPurgeClick,
             onConfirmPurge = viewModel::onConfirmPurge,
             onDismissPurgeDialog = viewModel::onDismissPurgeDialog,
+            onColorClick = viewModel::onColorClick,
+            onConfirmColor = viewModel::onConfirmColor,
+            onDismissColorDialog = viewModel::onDismissColorDialog,
+            onRemoveColor = viewModel::onRemoveColor,
             onSaveBackupClick = {
                 saveBackupLauncher.launch(viewModel.suggestedBackupFileName())
             },
@@ -307,6 +317,14 @@ fun TagCloudContent(
         )
     }
 
+    state.colouringTag?.let { tag ->
+        ColorPickerDialog(
+            tag = tag,
+            onConfirm = callbacks.onConfirmColor,
+            onDismiss = callbacks.onDismissColorDialog,
+        )
+    }
+
     state.pendingRestore?.let { backup ->
         RestoreDialog(
             backup = backup,
@@ -349,9 +367,11 @@ private fun TagChip(
     val view = LocalView.current
 
     Box {
-        Surface(
+        TagChipFace(
+            name = tag.name,
+            isFavorite = tag.isFavorite,
+            color = tag.color?.let(::Color),
             modifier = Modifier
-                .heightIn(min = ChipHeight)
                 .combinedClickable(
                     role = Role.Button,
                     onClick = {
@@ -372,33 +392,7 @@ private fun TagChip(
                         callbacks.onTagLongClick(tag)
                     },
                 ),
-            shape = MaterialTheme.shapes.small,
-            color = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                if (tag.isFavorite) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = stringResource(R.string.favorite_tag),
-                        modifier = Modifier.size(SuggestionChipDefaults.IconSize),
-                    )
-                }
-                // A safety net for narrow screens and large accessibility fonts:
-                // the length cap alone does not guarantee the name fits.
-                Text(
-                    text = tag.name,
-                    style = MaterialTheme.typography.labelLarge,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
+        )
 
         // DropdownMenu brings its own open and close transition, so the menu
         // grows out of the chip it belongs to instead of appearing whole.
@@ -431,6 +425,19 @@ private fun TagChip(
                 },
                 onClick = { callbacks.onToggleFavorite(tag) },
             )
+            // Add or remove, never "change": a colour the user has tired of is
+            // taken away and another one picked.
+            if (tag.color == null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.tag_menu_color)) },
+                    onClick = { callbacks.onColorClick(tag) },
+                )
+            } else {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.tag_menu_remove_color)) },
+                    onClick = { callbacks.onRemoveColor(tag) },
+                )
+            }
             if (!hasEntries) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.tag_menu_delete)) },
@@ -450,7 +457,72 @@ private fun TagChip(
     }
 }
 
+/**
+ * How a tag looks: the chip itself, and — when the tag has a colour — a tab of
+ * that colour lying underneath it, showing on the left by as much as the chip
+ * pads its text. The border takes the colour too, so tab and chip read as one.
+ *
+ * Shared by the cloud and the colour picker's preview, so what is previewed is
+ * exactly what the cloud will draw.
+ *
+ * Only a coloured tag is widened by the tab: a cloud without colours lays out
+ * exactly as it always did, and the tab never reaches into the gap next to it.
+ */
+@Composable
+fun TagChipFace(
+    name: String,
+    isFavorite: Boolean,
+    color: Color?,
+    modifier: Modifier = Modifier,
+) {
+    val shape = MaterialTheme.shapes.small
+
+    Box(modifier = modifier) {
+        if (color != null) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .background(color, shape),
+            )
+        }
+        Surface(
+            modifier = Modifier
+                .padding(start = if (color != null) ChipPaddingStart else 0.dp)
+                .heightIn(min = ChipHeight),
+            shape = shape,
+            color = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            border = BorderStroke(1.dp, color ?: MaterialTheme.colorScheme.outline),
+        ) {
+            Row(
+                modifier = Modifier.padding(start = ChipPaddingStart, end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                if (isFavorite) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = stringResource(R.string.favorite_tag),
+                        modifier = Modifier.size(SuggestionChipDefaults.IconSize),
+                    )
+                }
+                // A safety net for narrow screens and large accessibility fonts:
+                // the length cap alone does not guarantee the name fits.
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.labelLarge,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
 private val ChipHeight = 32.dp
+
+/** The chip's padding before its content, and so also how far a colour tab shows. */
+private val ChipPaddingStart = 12.dp
 
 /**
  * What the app does with the log as a whole, rather than with one tag. Out of
@@ -621,7 +693,7 @@ private fun TagCloudContentPreview() {
             ),
             callbacks = TagCloudCallbacks(
                 {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-                {}, {}, {}, {},
+                {}, {}, {}, {}, {}, {}, {}, {},
             ),
         )
     }

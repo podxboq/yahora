@@ -129,7 +129,9 @@ class BackupRepository(
         try {
             // Tags are rebuilt so name_key is derived here, never taken on trust.
             backupDao.replaceAll(
-                tags = backup.tags.map { Tag(id = it.id, name = it.name, isFavorite = it.isFavorite) },
+                tags = backup.tags.map {
+                    Tag(id = it.id, name = it.name, isFavorite = it.isFavorite, color = it.color)
+                },
                 entries = backup.entries.map { Entry(tagId = it.tagId, timestamp = it.timestamp) },
             )
             RestoreBackupResult.Restored(backup.entries.size)

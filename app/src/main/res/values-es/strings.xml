@@ -27,6 +27,16 @@
     <string name="tag_menu_purge">Borrar con sus registros</string>
     <string name="tag_menu_favorite">Marcar como favorita</string>
     <string name="tag_menu_unfavorite">Quitar de favoritas</string>
+    <string name="tag_menu_color">Color</string>
+    <string name="tag_menu_remove_color">Quitar color</string>
+
+    <string name="color_dialog_title">Color de %1$s</string>
+    <string name="color_hue">Tono</string>
+    <string name="color_saturation">Saturación</string>
+    <string name="color_lightness">Luminosidad</string>
+    <string name="color_hex">Código hexadecimal</string>
+    <string name="color_swatch">Color %1$s</string>
+    <string name="action_apply">Aplicar</string>
 
     <string name="rename_tag_dialog_title">Renombrar %1$s</string>
     <string name="action_rename">Renombrar</string>

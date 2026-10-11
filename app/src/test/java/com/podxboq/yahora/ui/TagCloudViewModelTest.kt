@@ -571,6 +571,37 @@ class TagCloudViewModelTest {
     }
 
     @Test
+    fun `a colour is picked from the menu and removed from it`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onTagLongClick(tag)
+        viewModel.onColorClick(tag)
+        assertNull(viewModel.uiState.value.menuTagId)
+        assertEquals(tag.id, viewModel.uiState.value.colouringTag?.id)
+
+        viewModel.onConfirmColor(0xFF43A047.toInt())
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.colouringTag)
+        assertEquals(0xFF43A047.toInt(), viewModel.uiState.value.tags.single().color)
+
+        viewModel.onRemoveColor(viewModel.uiState.value.tags.single())
+        advanceUntilIdle()
+        assertNull(viewModel.uiState.value.tags.single().color)
+    }
+
+    @Test
+    fun `cancelling the colour picker leaves the tag uncoloured`() = runTest(dispatcher) {
+        val tag = addTag("Coffee")
+
+        viewModel.onColorClick(tag)
+        viewModel.onDismissColorDialog()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.colouringTag)
+        assertNull(viewModel.uiState.value.tags.single().color)
+    }
+
+    @Test
     fun `a saved backup restores the log it was taken from`() = runTest(dispatcher) {
         val coffee = addTag("Coffee")
         viewModel.onTagClick(coffee)

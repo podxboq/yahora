@@ -46,4 +46,13 @@ data class Tag(
 
     @ColumnInfo(name = "name_key")
     val nameKey: String = TagName.normalize(name),
+
+    /**
+     * The colour the user picked for the tag, as ARGB, or null for none. It is
+     * entirely theirs: any colour goes, and nothing checks it against the
+     * theme. It never carries meaning of its own — the name says which tag it
+     * is — so a colour that reads poorly costs a handle, not information.
+     */
+    @ColumnInfo(name = "color")
+    val color: Int? = null,
 )

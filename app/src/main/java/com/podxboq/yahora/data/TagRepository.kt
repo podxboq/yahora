@@ -104,6 +104,12 @@ class TagRepository(
     suspend fun toggleFavorite(id: Long) = tagDao.toggleFavorite(id)
 
     /**
+     * Gives a tag a colour, or takes it away with null. There is no "change":
+     * a colour the user no longer likes is removed and another one picked.
+     */
+    suspend fun setColor(id: Long, color: Int?) = tagDao.setColor(id, color)
+
+    /**
      * Deletes a tag, provided it holds no entries. The foreign key is what
      * enforces that — the UI hides the action, but the guarantee lives in the
      * database, not in whatever the screen happened to know.

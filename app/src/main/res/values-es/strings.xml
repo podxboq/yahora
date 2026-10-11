@@ -54,6 +54,10 @@
     <string name="action_delete">Borrar</string>
     <string name="purge_tag_dialog_title">¿Borrar %1$s y sus registros?</string>
     <string name="purge_tag_dialog_text">Se borrarán todos los registros de la etiqueta. No se puede deshacer.</string>
+    <string name="tag_detail_delete_all">Borrar todos los registros</string>
+    <string name="bulk_delete_month_text">Se borrarán todos los registros de %1$s en %2$s. No se puede deshacer.</string>
+    <string name="bulk_delete_day_text">Se borrarán todos los registros de %1$s del %2$s. No se puede deshacer.</string>
+    <string name="bulk_delete_all_text">Se borrarán todos los registros de %1$s. La etiqueta se conserva, vacía. No se puede deshacer.</string>
     <string name="tag_detail_expand">Desplegar</string>
     <string name="tag_detail_collapse">Plegar</string>
     <string name="month_year_pattern">LLLL \'de\' yyyy</string>
@@ -68,6 +72,16 @@
         <item quantity="one">%d día</item>
         <item quantity="many">%d de días</item>
         <item quantity="other">%d días</item>
+    </plurals>
+    <plurals name="delete_entries_action">
+        <item quantity="one">Borrar %d registro</item>
+        <item quantity="many">Borrar %d de registros</item>
+        <item quantity="other">Borrar %d registros</item>
+    </plurals>
+    <plurals name="bulk_delete_dialog_title">
+        <item quantity="one">¿Borrar %d registro?</item>
+        <item quantity="many">¿Borrar %d de registros?</item>
+        <item quantity="other">¿Borrar %d registros?</item>
     </plurals>
     <plurals name="tag_count">
         <item quantity="one">%d etiqueta</item>

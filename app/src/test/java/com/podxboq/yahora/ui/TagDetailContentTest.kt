@@ -249,10 +249,94 @@ class TagDetailContentTest {
     }
 
     /** Three entries on 14 August, one on 2 August. */
+    @Test
+    fun `a long press on a month offers to delete it, counting its entries`() {
+        var longPressed: BranchNode? = null
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(),
+                callbacks = noopCallbacks.copy(onBranchLongClick = { longPressed = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("August 2026").performTouchInput { longClick() }
+
+        assert(longPressed?.key == "2026-08") { "Expected the month to be long-pressed" }
+    }
+
+    @Test
+    fun `the month menu names how many entries would go`() {
+        var deleted: BranchNode? = null
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(menuBranchKey = "2026-08"),
+                callbacks = noopCallbacks.copy(onDeleteBranchClick = { deleted = it }),
+            )
+        }
+
+        composeRule.onNodeWithText("Delete 4 entries").performClick()
+
+        assert(deleted?.key == "2026-08") { "Expected the month to be deleted" }
+    }
+
+    @Test
+    fun `the bulk deletion dialog names the tag, the month and the count`() {
+        var confirmed = false
+        val august = stateOf().months.single()
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(
+                    bulkDeletion = PendingBulkDeletion(
+                        DeletionScope.Month(august.month),
+                        august.entries,
+                    ),
+                ),
+                callbacks = noopCallbacks.copy(onConfirmBulkDeletion = { confirmed = true }),
+            )
+        }
+
+        composeRule.onNodeWithText("Delete 4 entries?").assertIsDisplayed()
+        composeRule.onNodeWithText("Every entry of Coffee in August 2026", substring = true)
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Delete").performClick()
+
+        assert(confirmed) { "Expected the deletion to be confirmed" }
+    }
+
+    @Test
+    fun `the overflow menu offers to empty the tag`() {
+        var emptied = false
+        composeRule.setContent {
+            TagDetailContent(
+                state = stateOf(),
+                callbacks = noopCallbacks.copy(onDeleteAllEntriesClick = { emptied = true }),
+            )
+        }
+
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Delete all entries").performClick()
+
+        assert(emptied) { "Expected the tag to be emptied" }
+    }
+
+    @Test
+    fun `a tag without history has no overflow menu`() {
+        composeRule.setContent {
+            TagDetailContent(
+                state = TagDetailUiState(tagName = "Coffee"),
+                callbacks = noopCallbacks,
+            )
+        }
+
+        composeRule.onNodeWithContentDescription("More options").assertDoesNotExist()
+    }
+
     private fun stateOf(
         expanded: Set<String> = emptySet(),
         menuEntryId: Long? = null,
         pendingDeletion: TimeNode? = null,
+        menuBranchKey: String? = null,
+        bulkDeletion: PendingBulkDeletion? = null,
     ) = TagDetailUiState(
         tagName = "Coffee",
         months = listOf(
@@ -264,6 +348,8 @@ class TagDetailContentTest {
         expandedKeys = expanded,
         menuEntryId = menuEntryId,
         entryPendingDeletion = pendingDeletion,
+        menuBranchKey = menuBranchKey,
+        bulkDeletion = bulkDeletion,
     )
 
     private fun entryAt(id: Long, localDateTime: String): Entry =
@@ -281,5 +367,11 @@ class TagDetailContentTest {
         onDeleteEntryClick = {},
         onConfirmDeleteEntry = {},
         onDismissDeleteEntry = {},
+        onBranchLongClick = {},
+        onDismissBranchMenu = {},
+        onDeleteBranchClick = {},
+        onDeleteAllEntriesClick = {},
+        onConfirmBulkDeletion = {},
+        onDismissBulkDeletion = {},
     )
 }

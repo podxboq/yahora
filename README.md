@@ -33,7 +33,9 @@ The design goal is that recording an event costs one tap and zero attention.
 - **Safe by construction** — a tag that has entries cannot be deleted, so
   history is never lost by accident. An entry can be removed shortly after it
   was logged, which is the window in which a slip of the finger is noticed;
-  timestamps are never edited.
+  timestamps are never edited. Past that window, history only goes in whole
+  blocks — a month, a day, or all of a tag's entries — and always after a
+  confirmation that says how many.
 
 ## Out of scope for now
 

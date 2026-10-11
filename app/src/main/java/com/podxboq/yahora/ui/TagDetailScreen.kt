@@ -19,7 +19,6 @@ package com.podxboq.yahora.ui
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +34,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,7 +48,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -67,6 +69,7 @@ import com.podxboq.yahora.data.Entry
 import com.podxboq.yahora.ui.theme.YahoraTheme
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 
 /** Everything the detail screen can ask of its host. */
@@ -78,6 +81,12 @@ data class TagDetailCallbacks(
     val onDeleteEntryClick: (TimeNode) -> Unit,
     val onConfirmDeleteEntry: () -> Unit,
     val onDismissDeleteEntry: () -> Unit,
+    val onBranchLongClick: (BranchNode) -> Unit,
+    val onDismissBranchMenu: () -> Unit,
+    val onDeleteBranchClick: (BranchNode) -> Unit,
+    val onDeleteAllEntriesClick: () -> Unit,
+    val onConfirmBulkDeletion: () -> Unit,
+    val onDismissBulkDeletion: () -> Unit,
 )
 
 @Composable
@@ -98,6 +107,12 @@ fun TagDetailScreen(
             onDeleteEntryClick = viewModel::onDeleteEntryClick,
             onConfirmDeleteEntry = viewModel::onConfirmDeleteEntry,
             onDismissDeleteEntry = viewModel::onDismissDeleteEntry,
+            onBranchLongClick = viewModel::onBranchLongClick,
+            onDismissBranchMenu = viewModel::onDismissBranchMenu,
+            onDeleteBranchClick = viewModel::onDeleteBranchClick,
+            onDeleteAllEntriesClick = viewModel::onDeleteAllEntriesClick,
+            onConfirmBulkDeletion = viewModel::onConfirmBulkDeletion,
+            onDismissBulkDeletion = viewModel::onDismissBulkDeletion,
         ),
         modifier = modifier,
     )
@@ -124,6 +139,10 @@ fun TagDetailContent(
                             contentDescription = stringResource(R.string.action_back),
                         )
                     }
+                },
+                actions = {
+                    // Nothing to empty on a tag without history.
+                    if (state.months.isNotEmpty()) DetailOverflowMenu(callbacks)
                 },
             )
         },
@@ -153,8 +172,10 @@ fun TagDetailContent(
                     TreeRow(
                         row = row,
                         isExpanded = state.isExpanded(row.node.key),
-                        isMenuOpen = state.menuEntryId != null &&
-                            state.menuEntryId == (row.node as? TimeNode)?.entry?.id,
+                        isMenuOpen = when (val node = row.node) {
+                            is TimeNode -> state.menuEntryId == node.entry.id
+                            is BranchNode -> state.menuBranchKey == node.key
+                        },
                         callbacks = callbacks,
                         // Rows shift as branches open and close; animating the
                         // move keeps the eye on the row it was reading.
@@ -168,6 +189,80 @@ fun TagDetailContent(
     state.entryPendingDeletion?.let { node ->
         DeleteEntryDialog(node = node, callbacks = callbacks)
     }
+
+    state.bulkDeletion?.let { pending ->
+        BulkDeletionDialog(pending = pending, tagName = state.tagName, callbacks = callbacks)
+    }
+}
+
+/** Actions on the tag's history as a whole. */
+@Composable
+private fun DetailOverflowMenu(callbacks: TagDetailCallbacks) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = stringResource(R.string.more_options),
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.tag_detail_delete_all)) },
+                onClick = {
+                    expanded = false
+                    callbacks.onDeleteAllEntriesClick()
+                },
+            )
+        }
+    }
+}
+
+/**
+ * Asks before a block of history goes, naming the tag, the period and the
+ * count — a month picked by mistake from a long list should not slip through
+ * on a reflexive tap.
+ */
+@Composable
+private fun BulkDeletionDialog(
+    pending: PendingBulkDeletion,
+    tagName: String,
+    callbacks: TagDetailCallbacks,
+) {
+    val locale = LocalConfiguration.current.locales[0]
+    val count = pending.entries.size
+    val text = when (val scope = pending.scope) {
+        is DeletionScope.Month -> stringResource(
+            R.string.bulk_delete_month_text,
+            tagName,
+            dateFormatter(R.string.month_year_pattern, locale).format(scope.month),
+        )
+
+        is DeletionScope.Day -> stringResource(
+            R.string.bulk_delete_day_text,
+            tagName,
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).format(scope.date),
+        )
+
+        DeletionScope.AllEntries -> stringResource(R.string.bulk_delete_all_text, tagName)
+    }
+
+    AlertDialog(
+        onDismissRequest = callbacks.onDismissBulkDeletion,
+        title = { Text(pluralStringResource(R.plurals.bulk_delete_dialog_title, count, count)) },
+        text = { Text(text) },
+        confirmButton = {
+            TextButton(onClick = callbacks.onConfirmBulkDeletion) {
+                Text(stringResource(R.string.action_delete))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = callbacks.onDismissBulkDeletion) {
+                Text(stringResource(R.string.action_cancel))
+            }
+        },
+    )
 }
 
 /**
@@ -222,8 +317,8 @@ private fun TreeRow(
     callbacks: TagDetailCallbacks,
     modifier: Modifier = Modifier,
 ) {
-    // Entries are the last level: they have nothing left to open, and they are
-    // the only rows there is anything to do to.
+    // Entries are the last level, with nothing left to open; a tap on a branch
+    // opens it, and a long press on either offers to delete it.
     val branch = row.node as? BranchNode
     val entry = row.node as? TimeNode
     val view = LocalView.current
@@ -244,8 +339,16 @@ private fun TreeRow(
                                 callbacks.onEntryLongClick(entry)
                             },
                         )
+                    } else if (branch != null) {
+                        Modifier.combinedClickable(
+                            onClick = { callbacks.onToggleNode(branch.key) },
+                            onLongClick = {
+                                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                                callbacks.onBranchLongClick(branch)
+                            },
+                        )
                     } else {
-                        Modifier.clickable { callbacks.onToggleNode(row.node.key) }
+                        Modifier
                     },
                 )
                 .padding(
@@ -284,6 +387,18 @@ private fun TreeRow(
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.entry_menu_delete)) },
                     onClick = { callbacks.onDeleteEntryClick(entry) },
+                )
+            }
+        }
+
+        if (branch != null) {
+            DropdownMenu(expanded = isMenuOpen, onDismissRequest = callbacks.onDismissBranchMenu) {
+                val count = branch.entries.size
+                DropdownMenuItem(
+                    // The count is in the label, so the menu itself says how
+                    // much is about to go before the dialog repeats it.
+                    text = { Text(pluralStringResource(R.plurals.delete_entries_action, count, count)) },
+                    onClick = { callbacks.onDeleteBranchClick(branch) },
                 )
             }
         }
@@ -357,7 +472,7 @@ private fun TagDetailContentPreview() {
                 months = entries.groupIntoMonths(ZoneOffset.UTC),
                 expandedKeys = setOf("2026-08"),
             ),
-            callbacks = TagDetailCallbacks({}, {}, {}, {}, {}, {}, {}),
+            callbacks = TagDetailCallbacks({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}),
         )
     }
 }

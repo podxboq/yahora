@@ -18,6 +18,7 @@
 package com.podxboq.yahora.data
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
@@ -49,4 +50,13 @@ interface EntryDao {
     /** Deletes one entry. Nothing happens if it is already gone. */
     @Query("DELETE FROM entries WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    /**
+     * Deletes exactly these entries, in one transaction, and says how many were
+     * still there. One statement per entry rather than `IN (:ids)`, because
+     * SQLite before 3.32 — Android below 11 — caps a query at 999 arguments and
+     * a year of a busy tag runs past that.
+     */
+    @Delete
+    suspend fun delete(entries: List<Entry>): Int
 }

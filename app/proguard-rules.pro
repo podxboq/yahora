@@ -1,2 +1,3 @@
-# Minification is currently disabled for release builds. When it is enabled,
-# add the rules needed by Room and Compose here.
+# Room, Compose and the AndroidX libraries ship their own consumer rules, so
+# nothing has to be kept by hand yet. Add rules here only for code reached by
+# reflection that R8 cannot see.

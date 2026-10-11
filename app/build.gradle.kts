@@ -48,7 +48,13 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 shrinks, optimises and obfuscates the DEX, and leaves
+            // build/outputs/mapping/release/mapping.txt behind. Play reads that
+            // file from the bundle to deobfuscate crash reports. R8 output is
+            // deterministic for a given toolchain, so F-Droid's byte-for-byte
+            // comparison still holds.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

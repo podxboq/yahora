@@ -30,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.podxboq.yahora.data.BackupRepository
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.TagRepository
 
@@ -44,6 +45,7 @@ import com.podxboq.yahora.data.TagRepository
 fun YahoraApp(
     tagRepository: TagRepository,
     entryRepository: EntryRepository,
+    backupRepository: BackupRepository,
     modifier: Modifier = Modifier,
 ) {
     var detailTagId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -64,7 +66,11 @@ fun YahoraApp(
         if (tagId == null) {
             TagCloudScreen(
                 viewModel = viewModel(
-                    factory = TagCloudViewModel.factory(tagRepository, entryRepository),
+                    factory = TagCloudViewModel.factory(
+                        tagRepository,
+                        entryRepository,
+                        backupRepository,
+                    ),
                 ),
                 onOpenTagDetail = { tag -> detailTagId = tag.id },
             )

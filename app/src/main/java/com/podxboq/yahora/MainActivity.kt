@@ -21,6 +21,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.podxboq.yahora.data.BackupRepository
+import com.podxboq.yahora.data.ContentResolverBackupFiles
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
@@ -38,10 +40,18 @@ class MainActivity : ComponentActivity() {
         // keeps the rule that history outlives tags.
         val tagRepository = TagRepository(database.tagDao(), canPurgeTags = BuildConfig.DEBUG)
         val entryRepository = EntryRepository(database.entryDao())
+        val backupRepository = BackupRepository(
+            database.backupDao(),
+            ContentResolverBackupFiles(contentResolver),
+        )
 
         setContent {
             YahoraTheme {
-                YahoraApp(tagRepository = tagRepository, entryRepository = entryRepository)
+                YahoraApp(
+                    tagRepository = tagRepository,
+                    entryRepository = entryRepository,
+                    backupRepository = backupRepository,
+                )
             }
         }
     }

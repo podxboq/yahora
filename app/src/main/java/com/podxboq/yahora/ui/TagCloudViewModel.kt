@@ -17,14 +17,21 @@
  */
 package com.podxboq.yahora.ui
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.podxboq.yahora.data.AddTagResult
+import com.podxboq.yahora.data.Backup
+import com.podxboq.yahora.data.BackupProblem
+import com.podxboq.yahora.data.BackupRepository
 import com.podxboq.yahora.data.DeleteTagResult
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.LogEntryResult
+import com.podxboq.yahora.data.ReadBackupResult
 import com.podxboq.yahora.data.RenameTagResult
+import com.podxboq.yahora.data.RestoreBackupResult
+import com.podxboq.yahora.data.SaveBackupResult
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.data.TagRepository
@@ -66,6 +73,11 @@ data class TagCloudUiState(
     val canPurgeTags: Boolean = false,
     /** The tag whose purge is waiting to be confirmed, if any. */
     val purgingTag: Tag? = null,
+    /**
+     * A backup already read and checked, waiting for the user to confirm that
+     * it may replace the log. Null when no restore is pending.
+     */
+    val pendingRestore: Backup? = null,
 ) {
     val renamingTagId: Long? get() = renamingTag?.id
 
@@ -96,11 +108,17 @@ sealed interface TagCloudMessage {
     data class EntryFailed(val tagName: String) : TagCloudMessage
     data class RenameFailed(val tagName: String) : TagCloudMessage
     data class DeleteFailed(val tagName: String) : TagCloudMessage
+    data class BackupSaved(val entryCount: Int) : TagCloudMessage
+    data object BackupFailed : TagCloudMessage
+    data class BackupRefused(val problem: BackupProblem) : TagCloudMessage
+    data class RestoreDone(val entryCount: Int) : TagCloudMessage
+    data object RestoreFailed : TagCloudMessage
 }
 
 class TagCloudViewModel(
     private val tagRepository: TagRepository,
     private val entryRepository: EntryRepository,
+    private val backupRepository: BackupRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TagCloudUiState(canPurgeTags = tagRepository.canPurgeTags))
@@ -281,15 +299,63 @@ class TagCloudViewModel(
         }
     }
 
+    /** What the file picker proposes when saving a backup. */
+    fun suggestedBackupFileName(): String = backupRepository.suggestedFileName()
+
+    /** Writes the whole log to the document the user just picked. */
+    fun onSaveBackup(uri: Uri) {
+        viewModelScope.launch {
+            val message = when (val result = backupRepository.save(uri)) {
+                is SaveBackupResult.Saved -> TagCloudMessage.BackupSaved(result.entryCount)
+                SaveBackupResult.Failed -> TagCloudMessage.BackupFailed
+            }
+            _messages.send(message)
+        }
+    }
+
+    /**
+     * Reads the picked file and, if it is a backup this version can restore,
+     * asks before replacing the log with it. A file that is refused never gets
+     * as far as the question.
+     */
+    fun onRestoreFrom(uri: Uri) {
+        viewModelScope.launch {
+            when (val result = backupRepository.read(uri)) {
+                is ReadBackupResult.Valid ->
+                    _uiState.update { it.copy(pendingRestore = result.backup) }
+
+                is ReadBackupResult.Invalid ->
+                    _messages.send(TagCloudMessage.BackupRefused(result.problem))
+            }
+        }
+    }
+
+    fun onDismissRestoreDialog() {
+        _uiState.update { it.copy(pendingRestore = null) }
+    }
+
+    fun onConfirmRestore() {
+        val backup = _uiState.value.pendingRestore ?: return
+        onDismissRestoreDialog()
+        viewModelScope.launch {
+            val message = when (val result = backupRepository.restore(backup)) {
+                is RestoreBackupResult.Restored -> TagCloudMessage.RestoreDone(result.entryCount)
+                RestoreBackupResult.Failed -> TagCloudMessage.RestoreFailed
+            }
+            _messages.send(message)
+        }
+    }
+
     companion object {
         fun factory(
             tagRepository: TagRepository,
             entryRepository: EntryRepository,
+            backupRepository: BackupRepository,
         ): ViewModelProvider.Factory =
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                    TagCloudViewModel(tagRepository, entryRepository) as T
+                    TagCloudViewModel(tagRepository, entryRepository, backupRepository) as T
             }
     }
 }

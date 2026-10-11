@@ -21,6 +21,8 @@ import android.content.Context
 import android.os.Build
 import android.text.format.DateFormat
 import android.view.HapticFeedbackConstants
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,6 +41,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -46,6 +49,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -61,7 +65,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -74,6 +80,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.podxboq.yahora.R
+import com.podxboq.yahora.data.Backup
+import com.podxboq.yahora.data.BackupProblem
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.ui.theme.YahoraTheme
@@ -101,6 +109,10 @@ data class TagCloudCallbacks(
     val onPurgeClick: (Tag) -> Unit,
     val onConfirmPurge: () -> Unit,
     val onDismissPurgeDialog: () -> Unit,
+    val onSaveBackupClick: () -> Unit,
+    val onRestoreClick: () -> Unit,
+    val onConfirmRestore: () -> Unit,
+    val onDismissRestoreDialog: () -> Unit,
 )
 
 @Composable
@@ -113,6 +125,15 @@ fun TagCloudScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val undoLabel = stringResource(R.string.action_undo)
+
+    // The system picker hands back a document the app may use, and nothing
+    // else: no storage permission is ever requested.
+    val saveBackupLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(BACKUP_MIME_TYPE),
+    ) { uri -> uri?.let(viewModel::onSaveBackup) }
+    val restoreLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri -> uri?.let(viewModel::onRestoreFrom) }
 
     LaunchedEffect(viewModel) {
         // collectLatest, so a second tap replaces the first announcement instead
@@ -153,6 +174,14 @@ fun TagCloudScreen(
             onPurgeClick = viewModel::onPurgeClick,
             onConfirmPurge = viewModel::onConfirmPurge,
             onDismissPurgeDialog = viewModel::onDismissPurgeDialog,
+            onSaveBackupClick = {
+                saveBackupLauncher.launch(viewModel.suggestedBackupFileName())
+            },
+            // Some providers label a .json file as plain text or as bytes, and a
+            // backup that cannot be picked cannot be restored.
+            onRestoreClick = { restoreLauncher.launch(RESTORE_MIME_TYPES) },
+            onConfirmRestore = viewModel::onConfirmRestore,
+            onDismissRestoreDialog = viewModel::onDismissRestoreDialog,
         ),
         modifier = modifier,
     )
@@ -171,7 +200,33 @@ private fun TagCloudMessage.toText(context: Context): String = when (this) {
     is TagCloudMessage.RenameFailed -> context.getString(R.string.rename_failed, tagName)
 
     is TagCloudMessage.DeleteFailed -> context.getString(R.string.delete_failed, tagName)
+
+    is TagCloudMessage.BackupSaved ->
+        context.getString(R.string.backup_saved, context.entryCount(entryCount))
+
+    TagCloudMessage.BackupFailed -> context.getString(R.string.backup_failed)
+
+    is TagCloudMessage.BackupRefused -> context.getString(
+        when (problem) {
+            BackupProblem.NOT_A_BACKUP -> R.string.restore_refused_not_a_backup
+            BackupProblem.NEWER_VERSION -> R.string.restore_refused_newer_version
+            BackupProblem.DAMAGED -> R.string.restore_refused_damaged
+            BackupProblem.UNREADABLE -> R.string.restore_refused_unreadable
+        },
+    )
+
+    is TagCloudMessage.RestoreDone ->
+        context.getString(R.string.restore_done, context.entryCount(entryCount))
+
+    TagCloudMessage.RestoreFailed -> context.getString(R.string.restore_failed)
 }
+
+private fun Context.entryCount(count: Int): String =
+    resources.getQuantityString(R.plurals.entry_count, count, count)
+
+private const val BACKUP_MIME_TYPE = "application/json"
+private val RESTORE_MIME_TYPES =
+    arrayOf(BACKUP_MIME_TYPE, "text/plain", "application/octet-stream")
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -183,7 +238,12 @@ fun TagCloudContent(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        topBar = { TopAppBar(title = { Text(stringResource(R.string.app_name)) }) },
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                actions = { OverflowMenu(callbacks) },
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             ExtendedFloatingActionButton(onClick = callbacks.onAddTagClick) {
@@ -244,6 +304,14 @@ fun TagCloudContent(
                     Text(stringResource(R.string.action_cancel))
                 }
             },
+        )
+    }
+
+    state.pendingRestore?.let { backup ->
+        RestoreDialog(
+            backup = backup,
+            onConfirm = callbacks.onConfirmRestore,
+            onDismiss = callbacks.onDismissRestoreDialog,
         )
     }
 
@@ -384,6 +452,81 @@ private fun TagChip(
 
 private val ChipHeight = 32.dp
 
+/**
+ * What the app does with the log as a whole, rather than with one tag. Out of
+ * the way on purpose: it is used once in a long while, and the cloud is for
+ * tapping.
+ */
+@Composable
+private fun OverflowMenu(callbacks: TagCloudCallbacks) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                imageVector = Icons.Filled.MoreVert,
+                contentDescription = stringResource(R.string.more_options),
+            )
+        }
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_save_backup)) },
+                onClick = {
+                    expanded = false
+                    callbacks.onSaveBackupClick()
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_restore_backup)) },
+                onClick = {
+                    expanded = false
+                    callbacks.onRestoreClick()
+                },
+            )
+        }
+    }
+}
+
+/**
+ * The last chance before the log is replaced. It says what the file holds and
+ * when it was made, so restoring last month's backup over this month's log is
+ * a choice and not an accident.
+ */
+@Composable
+private fun RestoreDialog(backup: Backup, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val exportedAt = Date(backup.exportedAt)
+    val date = DateFormat.getMediumDateFormat(context).format(exportedAt)
+    val time = DateFormat.getTimeFormat(context).format(exportedAt)
+    val tags = context.resources.getQuantityString(
+        R.plurals.tag_count,
+        backup.tags.size,
+        backup.tags.size,
+    )
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.restore_dialog_title)) },
+        text = {
+            Text(
+                stringResource(
+                    R.string.restore_dialog_text,
+                    date,
+                    time,
+                    tags,
+                    context.entryCount(backup.entries.size),
+                ),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(stringResource(R.string.action_restore)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
+}
+
 @Composable
 private fun EmptyTagCloud(modifier: Modifier = Modifier) {
     Column(
@@ -478,6 +621,7 @@ private fun TagCloudContentPreview() {
             ),
             callbacks = TagCloudCallbacks(
                 {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
+                {}, {}, {}, {},
             ),
         )
     }

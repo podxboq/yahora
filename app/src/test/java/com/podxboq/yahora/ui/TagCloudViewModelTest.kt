@@ -17,9 +17,13 @@
  */
 package com.podxboq.yahora.ui
 
+import android.net.Uri
 import androidx.room.Room
+import com.podxboq.yahora.data.BackupProblem
+import com.podxboq.yahora.data.BackupRepository
 import com.podxboq.yahora.data.Entry
 import com.podxboq.yahora.data.EntryRepository
+import com.podxboq.yahora.data.InMemoryBackupFiles
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagName
 import com.podxboq.yahora.data.TagRepository
@@ -67,6 +71,7 @@ class TagCloudViewModelTest {
         viewModel = TagCloudViewModel(
             tagRepository = TagRepository(database.tagDao()),
             entryRepository = EntryRepository(database.entryDao()) { NOW },
+            backupRepository = backupRepository(),
         )
     }
 
@@ -565,11 +570,89 @@ class TagCloudViewModelTest {
         assertEquals(1, database.entryDao().countForTag(kept.id))
     }
 
+    @Test
+    fun `a saved backup restores the log it was taken from`() = runTest(dispatcher) {
+        val coffee = addTag("Coffee")
+        viewModel.onTagClick(coffee)
+        advanceUntilIdle()
+        viewModel.onToggleFavorite(coffee)
+        advanceUntilIdle()
+        viewModel.messages.first() // The tap's own announcement.
+
+        viewModel.onSaveBackup(BACKUP)
+        advanceUntilIdle()
+        assertEquals(TagCloudMessage.BackupSaved(entryCount = 1), viewModel.messages.first())
+
+        // The log moves on after the backup: a new tag, and the old one emptied.
+        addTag("Tea")
+        database.backupDao().deleteAllEntries()
+
+        viewModel.onRestoreFrom(BACKUP)
+        advanceUntilIdle()
+        // Nothing is replaced until the user says so.
+        assertEquals(listOf("Coffee", "Tea"), viewModel.uiState.value.tags.map { it.name })
+        assertEquals(1, viewModel.uiState.value.pendingRestore?.entries?.size)
+
+        viewModel.onConfirmRestore()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNull(state.pendingRestore)
+        assertEquals(listOf("Coffee"), state.tags.map { it.name })
+        assertTrue(state.tags.single().isFavorite)
+        assertEquals(1, database.entryDao().countForTag(state.tags.single().id))
+        assertEquals(TagCloudMessage.RestoreDone(entryCount = 1), viewModel.messages.first())
+    }
+
+    @Test
+    fun `dismissing the restore dialog leaves the log alone`() = runTest(dispatcher) {
+        addTag("Coffee")
+        viewModel.onSaveBackup(BACKUP)
+        advanceUntilIdle()
+        addTag("Tea")
+
+        viewModel.onRestoreFrom(BACKUP)
+        advanceUntilIdle()
+        viewModel.onDismissRestoreDialog()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingRestore)
+        assertEquals(listOf("Coffee", "Tea"), viewModel.uiState.value.tags.map { it.name })
+    }
+
+    @Test
+    fun `a file that is not a backup is refused without asking`() = runTest(dispatcher) {
+        addTag("Coffee")
+        files[BACKUP] = "{\"some\": \"other app\"}"
+
+        viewModel.onRestoreFrom(BACKUP)
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingRestore)
+        assertEquals(
+            TagCloudMessage.BackupRefused(BackupProblem.NOT_A_BACKUP),
+            viewModel.messages.first(),
+        )
+        assertEquals(listOf("Coffee"), viewModel.uiState.value.tags.map { it.name })
+    }
+
+    @Test
+    fun `the suggested file name carries the date`() {
+        // NOW is 14 November 2023 in every time zone that is not far east of UTC.
+        assertTrue(viewModel.suggestedBackupFileName().matches(Regex("yahora-2023-11-1[45]\\.json")))
+    }
+
     /** A ViewModel wired the way a debug build wires it. */
     private fun debugViewModel() = TagCloudViewModel(
         tagRepository = TagRepository(database.tagDao(), canPurgeTags = true),
         entryRepository = EntryRepository(database.entryDao()) { NOW },
+        backupRepository = backupRepository(),
     )
+
+    private val files = InMemoryBackupFiles()
+
+    private fun backupRepository() =
+        BackupRepository(database.backupDao(), files, now = { NOW }, io = dispatcher)
 
     /** Creates a tag through [target] and hands back the stored one. */
     private fun TestScope.addTag(target: TagCloudViewModel, name: String): Tag {
@@ -590,5 +673,6 @@ class TagCloudViewModelTest {
 
     private companion object {
         const val NOW = 1_700_000_000_000L
+        val BACKUP: Uri = Uri.parse("content://test/yahora.json")
     }
 }

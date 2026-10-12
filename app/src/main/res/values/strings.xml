@@ -78,6 +78,14 @@
     <string name="action_delete">Delete</string>
     <string name="purge_tag_dialog_title">Delete %1$s and its entries?</string>
     <string name="purge_tag_dialog_text">Every entry logged under this tag goes with it. This cannot be undone.</string>
+    <!-- Empties the tag's history; the tag itself stays. -->
+    <string name="tag_detail_delete_all">Delete all entries</string>
+    <!-- %1$s is the tag name, %2$s a month such as "August 2026". -->
+    <string name="bulk_delete_month_text">Every entry of %1$s in %2$s will be deleted. This cannot be undone.</string>
+    <!-- %1$s is the tag name, %2$s a full date. -->
+    <string name="bulk_delete_day_text">Every entry of %1$s on %2$s will be deleted. This cannot be undone.</string>
+    <!-- %1$s is the tag name. -->
+    <string name="bulk_delete_all_text">Every entry of %1$s will be deleted. The tag stays, empty. This cannot be undone.</string>
     <string name="tag_detail_expand">Expand</string>
     <string name="tag_detail_collapse">Collapse</string>
     <!--
@@ -94,6 +102,15 @@
     <plurals name="day_count">
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
+    </plurals>
+    <!-- Long-press menu of a month or a day in the history. -->
+    <plurals name="delete_entries_action">
+        <item quantity="one">Delete %d entry</item>
+        <item quantity="other">Delete %d entries</item>
+    </plurals>
+    <plurals name="bulk_delete_dialog_title">
+        <item quantity="one">Delete %d entry?</item>
+        <item quantity="other">Delete %d entries?</item>
     </plurals>
     <plurals name="tag_count">
         <item quantity="one">%d tag</item>

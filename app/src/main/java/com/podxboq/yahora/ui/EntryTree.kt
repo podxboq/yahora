@@ -35,6 +35,9 @@ sealed interface EntryNode {
 /** A branch: it holds children, and says how many while it is collapsed. */
 sealed interface BranchNode : EntryNode {
     val childCount: Int
+
+    /** Every entry under this branch, at any depth: what deleting it would take. */
+    val entries: List<Entry>
 }
 
 /**
@@ -49,11 +52,13 @@ data class TimeNode(val time: LocalDateTime, val entry: Entry) : EntryNode {
 data class DayNode(val date: LocalDate, val times: List<TimeNode>) : BranchNode {
     override val key: String = date.toString()
     override val childCount: Int get() = times.size
+    override val entries: List<Entry> get() = times.map { it.entry }
 }
 
 data class MonthNode(val month: YearMonth, val days: List<DayNode>) : BranchNode {
     override val key: String = month.toString()
     override val childCount: Int get() = days.size
+    override val entries: List<Entry> get() = days.flatMap { it.entries }
 }
 
 /**

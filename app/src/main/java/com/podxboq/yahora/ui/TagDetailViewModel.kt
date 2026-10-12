@@ -20,8 +20,11 @@ package com.podxboq.yahora.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.podxboq.yahora.data.Entry
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.TagRepository
+import java.time.LocalDate
+import java.time.YearMonth
 import java.time.ZoneId
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,6 +32,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** What a bulk deletion takes: a month, a day, or the tag's whole history. */
+sealed interface DeletionScope {
+    data class Month(val month: YearMonth) : DeletionScope
+    data class Day(val date: LocalDate) : DeletionScope
+    data object AllEntries : DeletionScope
+}
+
+/**
+ * A block of history waiting to be confirmed for deletion. [entries] are fixed
+ * when the dialog opens, so the count it states is the count that goes.
+ */
+data class PendingBulkDeletion(val scope: DeletionScope, val entries: List<Entry>)
 
 data class TagDetailUiState(
     val tagName: String = "",
@@ -39,6 +55,10 @@ data class TagDetailUiState(
     val menuEntryId: Long? = null,
     /** The entry waiting to be confirmed for deletion, if any. */
     val entryPendingDeletion: TimeNode? = null,
+    /** Key of the month or day whose context menu is open, if any. */
+    val menuBranchKey: String? = null,
+    /** The block of history waiting to be confirmed for deletion, if any. */
+    val bulkDeletion: PendingBulkDeletion? = null,
 ) {
     fun isExpanded(key: String): Boolean = key in expandedKeys
 }
@@ -139,11 +159,56 @@ class TagDetailViewModel(
         }
     }
 
+    /**
+     * A long press on a month or a day offers to delete it whole. Unlike a
+     * single entry, there is no time window: a block is what you clear when a
+     * tag logged more than you ended up caring about, and that is only clear
+     * long afterwards. What it never allows is picking entries one by one out
+     * of the past — a block goes whole, or not at all.
+     */
+    fun onBranchLongClick(node: BranchNode) {
+        _uiState.update { it.copy(menuBranchKey = node.key) }
+    }
+
+    fun onDismissBranchMenu() {
+        _uiState.update { it.copy(menuBranchKey = null) }
+    }
+
+    fun onDeleteBranchClick(node: BranchNode) {
+        val scope = when (node) {
+            is MonthNode -> DeletionScope.Month(node.month)
+            is DayNode -> DeletionScope.Day(node.date)
+        }
+        _uiState.update {
+            it.copy(menuBranchKey = null, bulkDeletion = PendingBulkDeletion(scope, node.entries))
+        }
+    }
+
+    /** Empties the tag. The tag itself stays: deleting it is the cloud's business. */
+    fun onDeleteAllEntriesClick() {
+        val entries = _uiState.value.months.flatMap { it.entries }
+        if (entries.isEmpty()) return
+        _uiState.update {
+            it.copy(bulkDeletion = PendingBulkDeletion(DeletionScope.AllEntries, entries))
+        }
+    }
+
+    fun onDismissBulkDeletion() {
+        _uiState.update { it.copy(bulkDeletion = null) }
+    }
+
+    fun onConfirmBulkDeletion() {
+        val pending = _uiState.value.bulkDeletion ?: return
+        onDismissBulkDeletion()
+        viewModelScope.launch { entryRepository.deleteEntries(pending.entries) }
+    }
+
     companion object {
         /**
-         * How long an entry stays deletable. Long enough to catch a mistaken tap
-         * on the way to pocketing the phone, short enough that history cannot be
-         * tidied up after the fact.
+         * How long a single entry stays deletable. Long enough to catch a
+         * mistaken tap on the way to pocketing the phone, short enough that
+         * history cannot be tidied up entry by entry after the fact. Whole
+         * months and days are another matter; see [onBranchLongClick].
          */
         const val DELETE_WINDOW_MILLIS = 5 * 60 * 1000L
 

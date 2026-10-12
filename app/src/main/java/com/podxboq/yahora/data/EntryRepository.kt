@@ -56,4 +56,12 @@ class EntryRepository(
 
     /** Removes a single entry — how a mistaken tap is taken back. */
     suspend fun deleteEntry(id: Long) = entryDao.deleteById(id)
+
+    /**
+     * Removes a whole block of history — a month, a day, or all of a tag. It
+     * takes the entries themselves rather than a date range, so what goes is
+     * exactly what the user was shown and agreed to, and an entry logged while
+     * the dialog was open is not swept away with them.
+     */
+    suspend fun deleteEntries(entries: List<Entry>): Int = entryDao.delete(entries)
 }

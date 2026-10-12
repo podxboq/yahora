@@ -23,7 +23,9 @@ import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
@@ -288,6 +290,106 @@ class TagDetailViewModelTest {
 
         // The month and day go with it: a branch only exists for its entries.
         assertTrue(viewModel.uiState.value.months.isEmpty())
+    }
+
+    @Test
+    fun `a whole month goes, however old, and only that month`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Door locked"))
+        logEntries(tagId, "2025-03-01T08:00", "2025-03-31T22:00", "2025-04-01T08:00")
+        // A year and more later: far past the single-entry window.
+        now = at("2026-08-14T09:15:30")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+
+        val march = viewModel.uiState.value.months.single { it.key == "2025-03" }
+        viewModel.onBranchLongClick(march)
+        assertEquals("2025-03", viewModel.uiState.value.menuBranchKey)
+
+        viewModel.onDeleteBranchClick(march)
+        val pending = viewModel.uiState.value.bulkDeletion
+        assertNull(viewModel.uiState.value.menuBranchKey)
+        assertEquals(DeletionScope.Month(YearMonth.of(2025, 3)), pending?.scope)
+        assertEquals(2, pending?.entries?.size)
+
+        viewModel.onConfirmBulkDeletion()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.bulkDeletion)
+        assertEquals(listOf("2025-04"), viewModel.uiState.value.months.map { it.key })
+    }
+
+    @Test
+    fun `a whole day goes and leaves the rest of its month`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-07-02T08:00", "2026-07-02T18:00", "2026-07-03T08:00")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+
+        val day = viewModel.uiState.value.months.single().days.single { it.key == "2026-07-02" }
+        viewModel.onDeleteBranchClick(day)
+        assertEquals(DeletionScope.Day(LocalDate.of(2026, 7, 2)), viewModel.uiState.value.bulkDeletion?.scope)
+        viewModel.onConfirmBulkDeletion()
+        advanceUntilIdle()
+
+        val days = viewModel.uiState.value.months.single().days
+        assertEquals(listOf("2026-07-03"), days.map { it.key })
+    }
+
+    @Test
+    fun `emptying a tag keeps the tag`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-06-01T08:00", "2026-07-02T08:00")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+
+        viewModel.onDeleteAllEntriesClick()
+        assertEquals(DeletionScope.AllEntries, viewModel.uiState.value.bulkDeletion?.scope)
+        viewModel.onConfirmBulkDeletion()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.months.isEmpty())
+        assertEquals("Coffee", database.tagDao().findById(tagId)?.name)
+    }
+
+    @Test
+    fun `an empty tag has nothing to empty`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+
+        viewModel.onDeleteAllEntriesClick()
+
+        assertNull(viewModel.uiState.value.bulkDeletion)
+    }
+
+    @Test
+    fun `dismissing a bulk deletion keeps every entry`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-07-02T08:00")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+
+        viewModel.onDeleteAllEntriesClick()
+        viewModel.onDismissBulkDeletion()
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.bulkDeletion)
+        assertEquals(1, database.entryDao().countForTag(tagId))
+    }
+
+    @Test
+    fun `an entry logged while the dialog is open is not swept away`() = runTest(dispatcher) {
+        val tagId = database.tagDao().insert(Tag(name = "Coffee"))
+        logEntries(tagId, "2026-08-14T08:00")
+        val viewModel = viewModelFor(tagId)
+        advanceUntilIdle()
+
+        viewModel.onDeleteAllEntriesClick()
+        logEntries(tagId, "2026-08-14T09:00")
+        viewModel.onConfirmBulkDeletion()
+        advanceUntilIdle()
+
+        assertEquals(1, database.entryDao().countForTag(tagId))
     }
 
     private suspend fun logEntries(tagId: Long, vararg localDateTimes: String) {

@@ -134,6 +134,29 @@ class EntryDaoTest {
         assertEquals(listOf(300L, 200L, 100L), entries.map { it.timestamp })
     }
 
+    @Test
+    fun `deleting a list removes those entries and no others`() = runTest {
+        val tagId = tagDao.insert(Tag(name = "Coffee"))
+        val ids = (1L..3L).map { entryDao.insert(Entry(tagId = tagId, timestamp = it)) }
+        val doomed = ids.take(2).map { Entry(id = it, tagId = tagId, timestamp = 0) }
+
+        assertEquals(2, entryDao.delete(doomed))
+
+        assertEquals(1, entryDao.countForTag(tagId))
+    }
+
+    @Test
+    fun `deleting a list runs past SQLite's old 999-argument cap`() = runTest {
+        val tagId = tagDao.insert(Tag(name = "Door locked"))
+        val entries = (1L..1_500L).map {
+            Entry(id = entryDao.insert(Entry(tagId = tagId, timestamp = it)), tagId = tagId, timestamp = it)
+        }
+
+        assertEquals(1_500, entryDao.delete(entries))
+
+        assertEquals(0, entryDao.countForTag(tagId))
+    }
+
     private inline fun assertThrowsConstraintViolation(block: () -> Unit) {
         try {
             block()

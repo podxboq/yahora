@@ -5,8 +5,9 @@ confirmación, sin campos que rellenar.
 
 Casi todas las aplicaciones para llevar la cuenta de algo acaban convertidas en
 cuadernos de notas: categorías anidadas, campos a medida, recordatorios,
-estadísticas. Yahora renuncia a eso a propósito. Una etiqueta tiene un nombre y
-una marca de favorita; una entrada tiene una fecha y hora. Ese es el modelo
+paneles de datos. Yahora renuncia a eso a propósito. Una etiqueta tiene un
+nombre, una marca de favorita y, si quieres, un color; una entrada tiene una
+fecha y hora. Ese es el modelo
 entero, y de ahí sale el objetivo de diseño: registrar algo debe costar un toque
 y ninguna atención.
 
@@ -21,10 +22,17 @@ y ninguna atención.
 * Pulsación larga para todo lo demás — renombrar una etiqueta, marcarla como
   favorita o ver su historial. Lo que no aplica se oculta, no se muestra
   desactivado.
+* Color, si lo quieres — el que elijas, como una pestaña detrás de la ficha.
 * Historial en árbol — meses, luego días y luego cada entrada con su HH:mm:ss.
   Cada rama dice cuántos elementos contiene.
+* Estadísticas — cuántas veces se registró cada etiqueta, por año y mes. Elige
+  etiquetas para sumarlas juntas. Números que se leen de un vistazo, sin
+  gráficas.
+* Copia de seguridad — guarda todo el registro en el archivo que elijas y
+  restáuralo en este teléfono o en otro.
 * Segura por construcción — una etiqueta con entradas no se puede borrar, así
-  que un historial nunca se pierde por descuido.
+  que un historial nunca se pierde por descuido. Lo antiguo solo se borra por
+  meses, días o etiquetas enteras, tras una confirmación que dice cuántos.
 
 <b>Privacidad</b>
 
@@ -32,6 +40,6 @@ Yahora funciona completamente sin conexión. No declara el permiso de red, así
 que no puede llegar a internet ni por accidente: sin cuentas, sin analítica, sin
 publicidad y sin bibliotecas de terceros más allá de las del propio Android.
 Todo lo que registras se queda en la base de datos privada de la aplicación, en
-tu dispositivo.
+tu dispositivo, salvo que tú guardes un archivo de copia de seguridad.
 
 Yahora es software libre bajo la Licencia Pública General de GNU v3 o posterior.

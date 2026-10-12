@@ -28,8 +28,15 @@ The design goal is that recording an event costs one tap and zero attention.
 - **Context menu** — a long press offers renaming, toggling favorite, and
   browsing that tag's entries. Actions that do not apply are hidden rather than
   shown disabled.
+- **Colour** — any colour the user picks, drawn as a tab behind the chip and
+  in its border. Optional, and never the only thing that tells tags apart.
 - **History as a tree** — months, then days, then the entries themselves at
   `HH:mm:ss`, each branch stating how many children it holds.
+- **Statistics** — how many times each tag was logged, by year and month.
+  Periods only add tags up once the user picks which belong together; there
+  are no charts.
+- **Backup** — the whole log saved to a document the user picks, and restored
+  from one, replacing the log only after a confirmation.
 - **Safe by construction** — a tag that has entries cannot be deleted, so
   history is never lost by accident. An entry can be removed shortly after it
   was logged, which is the window in which a slip of the finger is noticed;
@@ -39,9 +46,10 @@ The design goal is that recording an event costs one tap and zero attention.
 
 ## Out of scope for now
 
-Data export (CSV or otherwise) is planned as a future extension — the schema is
-designed so it can be added without a migration. Nested categories, notes, and
-additional fields on an entry are explicitly not part of the design.
+Export to a spreadsheet (CSV) is not part of the app: the backup file is
+Yahora's own format, meant for restoring rather than editing. Nested
+categories, notes, and additional fields on an entry are explicitly not part of
+the design.
 
 ## Tech stack
 

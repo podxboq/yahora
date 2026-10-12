@@ -206,15 +206,16 @@ class FdroidMetadataTest {
     fun `the recipe describes the version being built`() {
         val recipe = recipeText()
 
+        // Builds accumulate oldest first, so the one being built is the last.
         assertEquals(
             "recipe versionName disagrees with the build",
             declared("versionName\\s*=\\s*\"([^\"]+)\"", buildScript()),
-            declared("versionName:\\s*(\\S+)", recipe),
+            last("versionName:\\s*(\\S+)", recipe),
         )
         assertEquals(
             "recipe versionCode disagrees with the build",
             declaredVersionCode().toString(),
-            declared("versionCode:\\s*(\\d+)", recipe),
+            last("versionCode:\\s*(\\d+)", recipe),
         )
         assertEquals(
             "CurrentVersionCode disagrees with the build",
@@ -250,6 +251,10 @@ class FdroidMetadataTest {
 
     private fun declared(pattern: String, text: String): String =
         requireNonNull(Regex(pattern).find(text)) { "nothing matching $pattern" }.groupValues[1]
+
+    private fun last(pattern: String, text: String): String =
+        requireNonNull(Regex(pattern).findAll(text).lastOrNull()) { "nothing matching $pattern" }
+            .groupValues[1]
 
     /** Reads `versionCode` out of the build script, the one place that declares it. */
     private fun declaredVersionCode(): Int =

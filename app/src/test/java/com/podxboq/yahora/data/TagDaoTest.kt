@@ -50,6 +50,26 @@ class TagDaoTest {
     }
 
     @Test
+    fun `a colour is set and cleared`() = runTest {
+        val id = dao.insert(Tag(name = "Coffee"))
+
+        dao.setColor(id, 0xFF1E88E5.toInt())
+        assertEquals(0xFF1E88E5.toInt(), dao.findById(id)?.color)
+
+        dao.setColor(id, null)
+        assertEquals(null, dao.findById(id)?.color)
+    }
+
+    @Test
+    fun `renaming keeps the colour`() = runTest {
+        val id = dao.insert(Tag(name = "Coffee", color = 0xFF6D4C41.toInt()))
+
+        dao.renameTo(dao.findById(id)!!, "Espresso")
+
+        assertEquals(0xFF6D4C41.toInt(), dao.findById(id)?.color)
+    }
+
+    @Test
     fun `inserted tag is read back`() = runTest {
         dao.insert(Tag(name = "Coffee"))
 

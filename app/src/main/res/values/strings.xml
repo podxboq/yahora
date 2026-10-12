@@ -41,6 +41,19 @@
     <string name="tag_menu_purge">Delete with its entries</string>
     <string name="tag_menu_favorite">Mark as favorite</string>
     <string name="tag_menu_unfavorite">Remove from favorites</string>
+    <!-- Offered when the tag has no colour; the other one when it has. -->
+    <string name="tag_menu_color">Color</string>
+    <string name="tag_menu_remove_color">Remove color</string>
+
+    <!-- Colour picker. %1$s is the tag name. -->
+    <string name="color_dialog_title">Color for %1$s</string>
+    <string name="color_hue">Hue</string>
+    <string name="color_saturation">Saturation</string>
+    <string name="color_lightness">Lightness</string>
+    <string name="color_hex">Hex code</string>
+    <!-- Read by screen readers on each quick pick. %1$s is a code such as #E53935. -->
+    <string name="color_swatch">Color %1$s</string>
+    <string name="action_apply">Apply</string>
 
     <!-- %1$s is the tag's current name. -->
     <string name="rename_tag_dialog_title">Rename %1$s</string>

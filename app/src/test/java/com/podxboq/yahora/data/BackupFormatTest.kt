@@ -31,7 +31,10 @@ class BackupFormatTest {
     @Test
     fun `what is written reads back the same`() {
         val backup = Backup(
-            tags = listOf(Tag(id = 3, name = "Café", isFavorite = true), Tag(id = 7, name = "Tea 🍵")),
+            tags = listOf(
+                Tag(id = 3, name = "Café", isFavorite = true, color = 0xFF43A047.toInt()),
+                Tag(id = 7, name = "Tea 🍵"),
+            ),
             entries = listOf(
                 Entry(tagId = 3, timestamp = 1_700_000_000_000),
                 Entry(tagId = 7, timestamp = 1_700_000_060_000),
@@ -41,6 +44,26 @@ class BackupFormatTest {
         )
 
         assertEquals(backup, read(write(backup)))
+    }
+
+    @Test
+    fun `a version 1 backup reads, with no colours`() {
+        val backup = read(
+            """{"format": "yahora-backup", "version": 1, "exportedAt": 5,
+                "tags": [{"id": 1, "name": "Coffee", "favorite": true}],
+                "entries": [{"tag": 1, "timestamp": 9}]}""",
+        )
+
+        assertEquals(listOf(Tag(id = 1, name = "Coffee", isFavorite = true)), backup.tags)
+        assertEquals(listOf(Entry(tagId = 1, timestamp = 9)), backup.entries)
+    }
+
+    @Test
+    fun `a colour that is not eight hex digits makes it damaged`() {
+        assertProblem(
+            BackupProblem.DAMAGED,
+            backupJson(tags = """{"id": 1, "name": "Coffee", "favorite": false, "color": "green"}"""),
+        )
     }
 
     @Test
@@ -64,7 +87,7 @@ class BackupFormatTest {
     fun `a backup from a later version is refused rather than half read`() {
         assertProblem(
             BackupProblem.NEWER_VERSION,
-            """{"format": "yahora-backup", "version": 2, "something": "new"}""",
+            """{"format": "yahora-backup", "version": 3, "something": "new"}""",
         )
     }
 
@@ -134,6 +157,6 @@ class BackupFormatTest {
     }
 
     private fun backupJson(tags: String = "", entries: String = "") =
-        """{"format": "yahora-backup", "version": 1, "exportedAt": 1,
+        """{"format": "yahora-backup", "version": 2, "exportedAt": 1,
             "tags": [$tags], "entries": [$entries]}"""
 }

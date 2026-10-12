@@ -78,6 +78,10 @@ interface TagDao {
     @Query("UPDATE tags SET is_favorite = NOT is_favorite WHERE id = :id")
     suspend fun toggleFavorite(id: Long)
 
+    /** Sets the tag's colour, or clears it with null. Nothing happens if the tag is gone. */
+    @Query("UPDATE tags SET color = :color WHERE id = :id")
+    suspend fun setColor(id: Long, color: Int?)
+
     /**
      * Deletes a tag. Fails if the tag still has entries — history is never
      * discarded as a side effect.
@@ -117,4 +121,4 @@ suspend fun TagDao.findByName(rawName: String): Tag? =
  * from the new name instead of being copied from the old one.
  */
 suspend fun TagDao.renameTo(tag: Tag, name: String) =
-    update(Tag(id = tag.id, name = name, isFavorite = tag.isFavorite))
+    update(Tag(id = tag.id, name = name, isFavorite = tag.isFavorite, color = tag.color))

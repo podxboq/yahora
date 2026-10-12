@@ -59,7 +59,9 @@ class BackupRepositoryTest {
 
     @Test
     fun `a restore on another phone brings back tags, favorites and entries`() = runTest {
-        val coffee = database.tagDao().insert(Tag(name = "Coffee", isFavorite = true))
+        val coffee = database.tagDao().insert(
+            Tag(name = "Coffee", isFavorite = true, color = 0xFF6D4C41.toInt()),
+        )
         val tea = database.tagDao().insert(Tag(name = "Tea"))
         database.entryDao().insert(Entry(tagId = coffee, timestamp = 100))
         database.entryDao().insert(Entry(tagId = tea, timestamp = 200))
@@ -80,6 +82,7 @@ class BackupRepositoryTest {
 
         val tags = other.tagDao().observeAll().first()
         assertEquals(listOf("Coffee" to true, "Tea" to false), tags.map { it.name to it.isFavorite })
+        assertEquals(listOf(0xFF6D4C41.toInt(), null), tags.map { it.color })
         assertEquals(listOf(300L, 100L), other.entryDao().observeForTag(coffee).first().map { it.timestamp })
         assertEquals(listOf(200L), other.entryDao().observeForTag(tea).first().map { it.timestamp })
         other.close()

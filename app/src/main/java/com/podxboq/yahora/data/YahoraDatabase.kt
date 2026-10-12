@@ -26,7 +26,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Tag::class, Entry::class],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class YahoraDatabase : RoomDatabase() {
@@ -61,6 +61,13 @@ abstract class YahoraDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds the optional tag colour. Existing tags simply have none. */
+        internal val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `tags` ADD COLUMN `color` INTEGER")
+            }
+        }
+
         @Volatile
         private var instance: YahoraDatabase? = null
 
@@ -71,7 +78,7 @@ abstract class YahoraDatabase : RoomDatabase() {
 
         private fun build(context: Context): YahoraDatabase =
             Room.databaseBuilder(context, YahoraDatabase::class.java, DATABASE_NAME)
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

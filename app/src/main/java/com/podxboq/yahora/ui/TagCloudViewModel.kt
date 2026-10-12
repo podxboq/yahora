@@ -78,6 +78,8 @@ data class TagCloudUiState(
      * it may replace the log. Null when no restore is pending.
      */
     val pendingRestore: Backup? = null,
+    /** The tag whose colour is being picked, if any. */
+    val colouringTag: Tag? = null,
 ) {
     val renamingTagId: Long? get() = renamingTag?.id
 
@@ -182,6 +184,31 @@ class TagCloudViewModel(
     fun onToggleFavorite(tag: Tag) {
         onDismissMenu()
         viewModelScope.launch { tagRepository.toggleFavorite(tag.id) }
+    }
+
+    /** Opens the colour picker for a tag that has no colour yet. */
+    fun onColorClick(tag: Tag) {
+        _uiState.update { it.copy(menuTagId = null, colouringTag = tag) }
+    }
+
+    fun onDismissColorDialog() {
+        _uiState.update { it.copy(colouringTag = null) }
+    }
+
+    fun onConfirmColor(color: Int) {
+        val tag = _uiState.value.colouringTag ?: return
+        onDismissColorDialog()
+        viewModelScope.launch { tagRepository.setColor(tag.id, color) }
+    }
+
+    /**
+     * Takes the colour away, with no confirmation: nothing is lost that cannot
+     * be picked again. It is also how a colour is changed — removed, then
+     * another one chosen.
+     */
+    fun onRemoveColor(tag: Tag) {
+        onDismissMenu()
+        viewModelScope.launch { tagRepository.setColor(tag.id, null) }
     }
 
     /**

@@ -53,7 +53,7 @@ class YahoraDatabaseMigrationTest {
         createVersion1Database()
 
         val database = Room.databaseBuilder(context, YahoraDatabase::class.java, TEST_DB)
-            .addMigrations(YahoraDatabase.MIGRATION_1_2)
+            .addMigrations(YahoraDatabase.MIGRATION_1_2, YahoraDatabase.MIGRATION_2_3)
             .build()
 
         try {
@@ -68,6 +68,80 @@ class YahoraDatabaseMigrationTest {
             assertEquals(1, database.entryDao().countForTag(tagId))
         } finally {
             database.close()
+        }
+    }
+
+    @Test
+    fun `migrating from 2 to 3 adds an empty colour and keeps tags and entries`() = runTest {
+        createVersion2Database()
+
+        val database = Room.databaseBuilder(context, YahoraDatabase::class.java, TEST_DB)
+            .addMigrations(YahoraDatabase.MIGRATION_1_2, YahoraDatabase.MIGRATION_2_3)
+            .build()
+
+        try {
+            val tag = database.tagDao().observeAll().first().single()
+            assertEquals("Coffee", tag.name)
+            assertEquals(true, tag.isFavorite)
+            assertEquals(null, tag.color)
+            assertEquals(1, database.entryDao().countForTag(tag.id))
+
+            database.tagDao().setColor(tag.id, 0xFF43A047.toInt())
+            assertEquals(0xFF43A047.toInt(), database.tagDao().findById(tag.id)?.color)
+        } finally {
+            database.close()
+        }
+    }
+
+    /** Version 2 as it shipped: tags and entries, no colour. */
+    private fun createVersion2Database() {
+        val configuration = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(TEST_DB)
+            .callback(object : SupportSQLiteOpenHelper.Callback(2) {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `tags` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`name` TEXT NOT NULL, " +
+                            "`is_favorite` INTEGER NOT NULL, " +
+                            "`name_key` TEXT NOT NULL)",
+                    )
+                    db.execSQL(
+                        "CREATE UNIQUE INDEX IF NOT EXISTS `index_tags_name_key` " +
+                            "ON `tags` (`name_key`)",
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `entries` (" +
+                            "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                            "`tag_id` INTEGER NOT NULL, " +
+                            "`timestamp` INTEGER NOT NULL, " +
+                            "FOREIGN KEY(`tag_id`) REFERENCES `tags`(`id`) " +
+                            "ON UPDATE RESTRICT ON DELETE RESTRICT )",
+                    )
+                    db.execSQL(
+                        "CREATE INDEX IF NOT EXISTS `index_entries_tag_id` ON `entries` (`tag_id`)",
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS room_master_table " +
+                            "(id INTEGER PRIMARY KEY, identity_hash TEXT)",
+                    )
+                    db.execSQL(
+                        "INSERT OR REPLACE INTO room_master_table (id, identity_hash) " +
+                            "VALUES(42, '$VERSION_2_IDENTITY_HASH')",
+                    )
+                    db.execSQL(
+                        "INSERT INTO tags (id, name, is_favorite, name_key) " +
+                            "VALUES (1, 'Coffee', 1, 'coffee')",
+                    )
+                    db.execSQL("INSERT INTO entries (tag_id, timestamp) VALUES (1, 1700000000000)")
+                }
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, old: Int, new: Int) = Unit
+            })
+            .build()
+
+        FrameworkSQLiteOpenHelperFactory().create(configuration).use { helper ->
+            helper.writableDatabase
         }
     }
 
@@ -118,5 +192,8 @@ class YahoraDatabaseMigrationTest {
 
         /** Copied from app/schemas/…/1.json. */
         const val VERSION_1_IDENTITY_HASH = "ea4ef6690f187d26529803493202cb27"
+
+        /** Copied from app/schemas/…/2.json. */
+        const val VERSION_2_IDENTITY_HASH = "5db9818db84e86ac27429a3761d05113"
     }
 }

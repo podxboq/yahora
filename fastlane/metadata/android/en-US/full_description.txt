@@ -3,11 +3,11 @@ then on a single tap on its chip records the date and time it happened. No
 intermediate screen, no confirmation dialog, no extra fields to fill in.
 
 Most tracking apps grow into note-taking tools: nested categories, custom
-fields, reminders, dashboards. Yahora deliberately does not. A tag has a name,
-a favourite flag and, if you like, a colour; an entry has a timestamp. That is the entire model, and
-the design goal follows from it — recording an event should cost one tap and
-zero attention. That simplicity is the point, not a step on the way to
-something bigger: nothing here is designed to keep you in the app or to
+fields, reminders, dashboards. Yahora deliberately does not. A tag has a name, a
+favourite flag and, if you like, a colour; an entry has a timestamp. That is the
+entire model, and the design goal follows from it — recording an event should
+cost one tap and zero attention. That simplicity is the point, not a step on the
+way to something bigger: nothing here is designed to keep you in the app or to
 bring you back to it.
 
 <b>What it does</b>

@@ -4,14 +4,13 @@ hora en que ha ocurrido. Sin pantallas intermedias, sin diálogos de
 confirmación, sin campos que rellenar.
 
 Casi todas las aplicaciones para llevar la cuenta de algo acaban convertidas en
-cuadernos de notas: categorías anidadas, campos a medida, recordatorios,
-paneles de datos. Yahora renuncia a eso a propósito. Una etiqueta tiene un
-nombre, una marca de favorita y, si quieres, un color; una entrada tiene una
-fecha y hora. Ese es el modelo
-entero, y de ahí sale el objetivo de diseño: registrar algo debe costar un toque
-y ninguna atención. Esa sencillez es justo el punto, no una etapa camino de
-algo más grande: aquí no hay nada diseñado para retenerte en la aplicación ni
-para hacerte volver.
+cuadernos de notas: categorías anidadas, campos a medida, recordatorios, paneles
+de datos. Yahora renuncia a eso a propósito. Una etiqueta tiene un nombre, una
+marca de favorita y, si quieres, un color; una entrada tiene una fecha y hora.
+Ese es el modelo entero, y de ahí sale el objetivo de diseño: registrar algo
+debe costar un toque y ninguna atención. Esa sencillez es justo el punto, no una
+etapa camino de algo más grande: aquí no hay nada diseñado para retenerte en la
+aplicación ni para hacerte volver.
 
 <b>Qué hace</b>
 

@@ -1,0 +1,9 @@
+Back up your whole log to a file you choose, and restore it on this phone or a new one.
+
+Delete a whole month, a day or all of a tag's entries at once, after a confirmation that says how many.
+
+Give a tag a colour, shown as a tab behind its chip.
+
+Statistics: how many times each tag was logged, by year and month, with a filter to add up the tags you pick.
+
+A smaller, faster app.

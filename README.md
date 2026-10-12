@@ -28,8 +28,15 @@ The design goal is that recording an event costs one tap and zero attention.
 - **Context menu** — a long press offers renaming, toggling favorite, and
   browsing that tag's entries. Actions that do not apply are hidden rather than
   shown disabled.
+- **Colour** — any colour the user picks, drawn as a tab behind the chip and
+  in its border. Optional, and never the only thing that tells tags apart.
 - **History as a tree** — months, then days, then the entries themselves at
   `HH:mm:ss`, each branch stating how many children it holds.
+- **Statistics** — how many times each tag was logged, by year and month.
+  Periods only add tags up once the user picks which belong together; there
+  are no charts.
+- **Backup** — the whole log saved to a document the user picks, and restored
+  from one, replacing the log only after a confirmation.
 - **Safe by construction** — a tag that has entries cannot be deleted, so
   history is never lost by accident. An entry can be removed shortly after it
   was logged, which is the window in which a slip of the finger is noticed;
@@ -39,14 +46,18 @@ The design goal is that recording an event costs one tap and zero attention.
 
 ## Out of scope for now
 
-Data export (CSV or otherwise) is planned as a future extension — the schema is
-designed so it can be added without a migration. Nested categories, notes, and
-additional fields on an entry are explicitly not part of the design.
+Export to a spreadsheet (CSV) is not part of the app: the backup file is
+Yahora's own format, meant for restoring rather than editing. Nested
+categories, notes, and additional fields on an entry are explicitly not part of
+the design.
 
 ## Tech stack
 
 Kotlin, Jetpack Compose with Material 3, and Room for local storage. The app is
-fully offline: no network access, no accounts, no telemetry.
+fully offline: no network access, no accounts, no telemetry. The
+[privacy policy](https://podxboq.github.io/yahora/privacy.html)
+([español](https://podxboq.github.io/yahora/privacidad.html)) states that in
+full.
 
 ## Building
 
@@ -73,9 +84,11 @@ The store listing lives in this repository, under
 `fastlane/metadata/android/<locale>/`, which is where F-Droid reads it from —
 description, changelog per version code, icon and screenshots. Its limits are
 checked by `FdroidMetadataTest`, so an over-long description fails the build
-rather than the merge request. The listing icon is not drawn by hand:
-`tools/render-listing-icon.py` rasterises it from the launcher icon's own
-drawables.
+rather than the merge request. Neither of the two drawn assets is made by hand:
+`tools/render-listing-icon.py` rasterises the icon from the launcher icon's own
+drawables, and `tools/render-feature-graphic.py` composes the 1024x500 feature
+graphic Google Play asks for from that same vector plus each locale's title and
+tagline.
 
 Screenshots come from a real device carrying a history that was written into a
 debug build's database: the tree groups entries by month and day, and timestamps
@@ -84,6 +97,12 @@ nothing to show. `tools/seed-demo-data.py` is the quickest way to get one — a
 fixed-seed history, so the same run weeks later still matches the screenshots it
 produced. They are then cropped with `tools/crop-screenshot.py`, which takes the
 phone's status and navigation bars off.
+
+The project pages at <https://podxboq.github.io/yahora/> are served by GitHub
+Pages from `docs/` in this repository, and exist because Google Play asks for
+the privacy policy as a live URL rather than a file. Editing the policy means
+editing `docs/privacy.html` and its Spanish counterpart, never a copy kept
+somewhere else.
 
 `fdroid/com.podxboq.yahora.yml` is the build recipe F-Droid needs. It is kept
 here for review, but F-Droid reads its own copy in

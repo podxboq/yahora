@@ -3,10 +3,12 @@ then on a single tap on its chip records the date and time it happened. No
 intermediate screen, no confirmation dialog, no extra fields to fill in.
 
 Most tracking apps grow into note-taking tools: nested categories, custom
-fields, reminders, statistics. Yahora deliberately does not. A tag has a name
-and a favourite flag; an entry has a timestamp. That is the entire model, and
-the design goal follows from it — recording an event should cost one tap and
-zero attention.
+fields, reminders, dashboards. Yahora deliberately does not. A tag has a name, a
+favourite flag and, if you like, a colour; an entry has a timestamp. That is the
+entire model, and the design goal follows from it — recording an event should
+cost one tap and zero attention. That simplicity is the point, not a step on the
+way to something bigger: nothing here is designed to keep you in the app or to
+bring you back to it.
 
 <b>What it does</b>
 
@@ -17,16 +19,22 @@ zero attention.
   a haptic tick as confirmation, and offers to undo it from its own snackbar.
 * Long press for everything else — rename a tag, mark it as a favourite, or
   browse its history. Actions that do not apply are hidden, not greyed out.
+* Colour, if you want one — any colour you pick, as a tab behind the chip.
 * History as a tree — months, then days, then the individual entries at
   HH:mm:ss. Each branch says how many children it holds.
+* Statistics — how many times each tag was logged, by year and month. Pick
+  tags to add them up together. Numbers you read at a glance, no charts.
+* Backup — save the whole log to a file you choose, and restore it on this
+  phone or a new one.
 * Safe by construction — a tag that holds entries cannot be deleted, so a
-  history is never lost by accident.
+  history is never lost by accident. Old entries go only in whole months,
+  days or tags, after a confirmation that says how many.
 
 <b>Privacy</b>
 
 Yahora is fully offline. It declares no network permission, so it cannot reach
 the internet even by accident: no accounts, no analytics, no advertising and no
 third-party libraries beyond Android's own. Everything you log stays in the
-app's private database on your device.
+app's private database on your device, unless you save a backup file yourself.
 
 Yahora is free software under the GNU General Public License v3 or later.

@@ -1,0 +1,9 @@
+Copia de seguridad de todo el registro en el archivo que elijas, para restaurarlo en este teléfono o en otro.
+
+Borra de una vez un mes, un día o todos los registros de una etiqueta, tras una confirmación que dice cuántos.
+
+Dale color a una etiqueta, como una pestaña detrás de su ficha.
+
+Estadísticas: cuántas veces se registró cada etiqueta, por año y mes, con un filtro para sumar las que elijas.
+
+Una aplicación más ligera y rápida.

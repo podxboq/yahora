@@ -127,6 +127,28 @@ class FdroidMetadataTest {
     }
 
     /**
+     * The feature graphic is Play's alone — F-Droid never asks for one — and
+     * Play refuses anything that is not exactly 1024x500. It carries the app's
+     * name and its own locale's tagline, so it is per-locale like the
+     * screenshots and unlike the icon, and `tools/render-feature-graphic.py`
+     * draws it from the launcher icon's drawables and the short description.
+     * Regenerate it whenever either of those changes; a graphic that fell out
+     * of step is not something the build would otherwise notice.
+     */
+    @Test
+    fun `every locale carries a 1024 by 500 feature graphic`() {
+        for (locale in locales) {
+            val graphic = File(metadata, "$locale/images/featureGraphic.png")
+            assertTrue("missing $locale/images/featureGraphic.png", graphic.isFile)
+
+            val (width, height) = pngSize(graphic)
+
+            assertEquals("$locale feature graphic width", 1024, width)
+            assertEquals("$locale feature graphic height", 500, height)
+        }
+    }
+
+    /**
      * Screenshots are the one part of the listing that cannot be rewritten from
      * a text editor: they have to be taken again on a device, with the demo data
      * and the language set up as they were. That makes a missing one expensive
@@ -206,15 +228,16 @@ class FdroidMetadataTest {
     fun `the recipe describes the version being built`() {
         val recipe = recipeText()
 
+        // Builds accumulate oldest first, so the one being built is the last.
         assertEquals(
             "recipe versionName disagrees with the build",
             declared("versionName\\s*=\\s*\"([^\"]+)\"", buildScript()),
-            declared("versionName:\\s*(\\S+)", recipe),
+            last("versionName:\\s*(\\S+)", recipe),
         )
         assertEquals(
             "recipe versionCode disagrees with the build",
             declaredVersionCode().toString(),
-            declared("versionCode:\\s*(\\d+)", recipe),
+            last("versionCode:\\s*(\\d+)", recipe),
         )
         assertEquals(
             "CurrentVersionCode disagrees with the build",
@@ -250,6 +273,10 @@ class FdroidMetadataTest {
 
     private fun declared(pattern: String, text: String): String =
         requireNonNull(Regex(pattern).find(text)) { "nothing matching $pattern" }.groupValues[1]
+
+    private fun last(pattern: String, text: String): String =
+        requireNonNull(Regex(pattern).findAll(text).lastOrNull()) { "nothing matching $pattern" }
+            .groupValues[1]
 
     /** Reads `versionCode` out of the build script, the one place that declares it. */
     private fun declaredVersionCode(): Int =

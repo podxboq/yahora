@@ -22,7 +22,9 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.room.Room
+import com.podxboq.yahora.data.BackupRepository
 import com.podxboq.yahora.data.EntryRepository
+import com.podxboq.yahora.data.InMemoryBackupFiles
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
@@ -65,6 +67,7 @@ class TagCloudUndoTest {
         viewModel = TagCloudViewModel(
             tagRepository = TagRepository(database.tagDao()),
             entryRepository = EntryRepository(database.entryDao()),
+            backupRepository = BackupRepository(database.backupDao(), InMemoryBackupFiles()),
         )
         tagId = runBlocking { database.tagDao().insert(Tag(name = "Coffee")) }
     }

@@ -22,7 +22,7 @@
 <p class="meta">
   Applies to the Android application <strong>Yahora</strong>
   (package <code>com.podxboq.yahora</code>), published by <strong>podxboq</strong>.<br>
-  Last updated: 22 August 2026.
+  Last updated: 11 October 2026.
 </p>
 
 <div class="callout">
@@ -45,7 +45,8 @@ isolated from other applications. That data consists of exactly two things:</p>
 </ul>
 
 <p>Nothing else is recorded. Yahora does not read your contacts, your location,
-your files, your accounts or your device identifiers, and it holds no field in
+your accounts or your device identifiers, nor any file other than a backup you
+pick yourself (see below), and it holds no field in
 which personal information could be entered other than a tag's name, which you
 choose yourself.</p>
 
@@ -67,6 +68,19 @@ device and Google, under
 <a href="https://policies.google.com/privacy" rel="noopener">Google's privacy
 policy</a> — the developer of Yahora takes no part in it and has no access to
 the result. You can turn it off in your device's backup settings.</p>
+
+<h2>Backup files</h2>
+
+<p>From its menu, Yahora can save your whole log to a file and restore it from
+one. In both cases you choose the file and where it lives, through Android's own
+file picker: the app is granted access to that one document and to nothing else,
+and it needs no storage permission to do so. The file holds exactly what the app
+stores, as described above, plus the time it was made. It is not encrypted, so
+anyone who can open the file can read your tag names and when you logged them;
+keep it somewhere you trust. If you save it to a cloud folder, the copy is
+governed by that service's terms, not by Yahora — the app itself still sends
+nothing over the network. A restore replaces the log on the phone with the one
+in the file, after asking you to confirm.</p>
 
 <h2>Permissions</h2>
 
@@ -93,7 +107,8 @@ it, and removing it needs no request to anybody. Clearing the app's storage
 (Settings → Apps → Yahora → Storage → Clear data) or uninstalling the app
 erases everything it has recorded. If you have Android's backup switched on,
 remember that a copy may remain in your own Google account until you delete it
-there.</p>
+there, and any backup file you saved stays wherever you put it until you delete
+it.</p>
 
 <h2>Changes to this policy</h2>
 

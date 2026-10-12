@@ -35,6 +35,8 @@ abstract class YahoraDatabase : RoomDatabase() {
 
     abstract fun entryDao(): EntryDao
 
+    abstract fun backupDao(): BackupDao
+
     companion object {
         private const val DATABASE_NAME = "yahora.db"
 

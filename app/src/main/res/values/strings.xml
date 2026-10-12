@@ -46,6 +46,28 @@
     <string name="rename_tag_dialog_title">Rename %1$s</string>
     <string name="action_rename">Rename</string>
 
+    <!-- Backup: the overflow menu of the tag cloud. -->
+    <string name="more_options">More options</string>
+    <string name="menu_save_backup">Back up</string>
+    <string name="menu_restore_backup">Restore backup</string>
+    <!-- %1$s is a count of entries, such as "12 entries". -->
+    <string name="backup_saved">Backup saved with %1$s</string>
+    <string name="backup_failed">Could not save the backup</string>
+    <string name="restore_refused_not_a_backup">That file is not a Yahora backup</string>
+    <string name="restore_refused_newer_version">That backup comes from a newer version of Yahora. Update the app to restore it.</string>
+    <string name="restore_refused_damaged">That backup is damaged and cannot be restored</string>
+    <string name="restore_refused_unreadable">Could not read that file</string>
+    <string name="restore_dialog_title">Replace your log?</string>
+    <!--
+      %1$s is the date the backup was made, %2$s the time, %3$s a count of tags
+      and %4$s a count of entries.
+    -->
+    <string name="restore_dialog_text">This backup was made on %1$s at %2$s and holds %3$s and %4$s. Everything logged on this phone now will be replaced by it. This cannot be undone.</string>
+    <string name="action_restore">Restore</string>
+    <!-- %1$s is a count of entries, such as "12 entries". -->
+    <string name="restore_done">Log restored with %1$s</string>
+    <string name="restore_failed">Could not restore the backup. Your log is unchanged.</string>
+
     <!-- Tag detail screen. -->
     <string name="action_back">Back</string>
     <string name="tag_detail_empty">No entries yet</string>
@@ -72,6 +94,10 @@
     <plurals name="day_count">
         <item quantity="one">%d day</item>
         <item quantity="other">%d days</item>
+    </plurals>
+    <plurals name="tag_count">
+        <item quantity="one">%d tag</item>
+        <item quantity="other">%d tags</item>
     </plurals>
     <plurals name="entry_count">
         <item quantity="one">%d entry</item>

@@ -27,7 +27,9 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.room.Room
 import com.podxboq.yahora.data.Entry
+import com.podxboq.yahora.data.BackupRepository
 import com.podxboq.yahora.data.EntryRepository
+import com.podxboq.yahora.data.InMemoryBackupFiles
 import com.podxboq.yahora.data.Tag
 import com.podxboq.yahora.data.TagRepository
 import com.podxboq.yahora.data.YahoraDatabase
@@ -50,6 +52,7 @@ class YahoraAppTest {
     private lateinit var database: YahoraDatabase
     private lateinit var tagRepository: TagRepository
     private lateinit var entryRepository: EntryRepository
+    private lateinit var backupRepository: BackupRepository
 
     @Before
     fun setUp() {
@@ -59,6 +62,7 @@ class YahoraAppTest {
         ).build()
         tagRepository = TagRepository(database.tagDao())
         entryRepository = EntryRepository(database.entryDao())
+        backupRepository = BackupRepository(database.backupDao(), InMemoryBackupFiles())
         runBlocking {
             val tagId = database.tagDao().insert(Tag(name = "Coffee"))
             database.entryDao().insert(Entry(tagId = tagId, timestamp = 1_755_162_900_000))
@@ -72,7 +76,7 @@ class YahoraAppTest {
 
     @Test
     fun `the context menu opens the detail, and back returns to the cloud`() {
-        composeRule.setContent { YahoraApp(tagRepository, entryRepository) }
+        composeRule.setContent { YahoraApp(tagRepository, entryRepository, backupRepository) }
 
         composeRule.onNodeWithText("Coffee").performTouchInput { longClick() }
         composeRule.onNodeWithText("View entries").performClick()

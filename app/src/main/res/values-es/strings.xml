@@ -31,6 +31,21 @@
     <string name="rename_tag_dialog_title">Renombrar %1$s</string>
     <string name="action_rename">Renombrar</string>
 
+    <string name="more_options">Más opciones</string>
+    <string name="menu_save_backup">Hacer copia de seguridad</string>
+    <string name="menu_restore_backup">Restaurar copia</string>
+    <string name="backup_saved">Copia guardada con %1$s</string>
+    <string name="backup_failed">No se pudo guardar la copia</string>
+    <string name="restore_refused_not_a_backup">Ese archivo no es una copia de Yahora</string>
+    <string name="restore_refused_newer_version">Esa copia es de una versión más reciente de Yahora. Actualiza la aplicación para restaurarla.</string>
+    <string name="restore_refused_damaged">Esa copia está dañada y no se puede restaurar</string>
+    <string name="restore_refused_unreadable">No se pudo leer ese archivo</string>
+    <string name="restore_dialog_title">¿Sustituir tu registro?</string>
+    <string name="restore_dialog_text">Esta copia se hizo el %1$s a las %2$s y contiene %3$s y %4$s. Todo lo registrado ahora en este teléfono se sustituirá por ella. No se puede deshacer.</string>
+    <string name="action_restore">Restaurar</string>
+    <string name="restore_done">Registro restaurado con %1$s</string>
+    <string name="restore_failed">No se pudo restaurar la copia. Tu registro no ha cambiado.</string>
+
     <string name="action_back">Atrás</string>
     <string name="tag_detail_empty">Aún no hay registros</string>
     <string name="entry_menu_delete">Borrar</string>
@@ -53,6 +68,11 @@
         <item quantity="one">%d día</item>
         <item quantity="many">%d de días</item>
         <item quantity="other">%d días</item>
+    </plurals>
+    <plurals name="tag_count">
+        <item quantity="one">%d etiqueta</item>
+        <item quantity="many">%d de etiquetas</item>
+        <item quantity="other">%d etiquetas</item>
     </plurals>
     <plurals name="entry_count">
         <item quantity="one">%d registro</item>

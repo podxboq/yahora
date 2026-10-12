@@ -23,10 +23,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
+import com.podxboq.yahora.data.Backup
+import com.podxboq.yahora.data.Entry
 import com.podxboq.yahora.data.Tag
 import org.junit.Rule
 import org.junit.Test
@@ -495,6 +498,50 @@ class TagCloudContentTest {
         composeRule.onNodeWithText("Cancel").assertDoesNotExist()
     }
 
+    @Test
+    fun `the overflow menu offers to back up and to restore`() {
+        var saved = false
+        var restored = false
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(),
+                callbacks = noopCallbacks.copy(
+                    onSaveBackupClick = { saved = true },
+                    onRestoreClick = { restored = true },
+                ),
+            )
+        }
+
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Back up").performClick()
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Restore backup").performClick()
+
+        assert(saved && restored) { "Expected both backup actions to be invoked" }
+    }
+
+    @Test
+    fun `the restore dialog says what the backup holds before replacing anything`() {
+        var confirmed = false
+        val backup = Backup(
+            tags = listOf(Tag(id = 1, name = "Coffee"), Tag(id = 2, name = "Tea")),
+            entries = listOf(Entry(tagId = 1, timestamp = 1), Entry(tagId = 2, timestamp = 2)),
+            exportedAt = 1_700_000_000_000,
+        )
+        composeRule.setContent {
+            TagCloudContent(
+                state = TagCloudUiState(pendingRestore = backup),
+                callbacks = noopCallbacks.copy(onConfirmRestore = { confirmed = true }),
+            )
+        }
+
+        composeRule.onNodeWithText("Replace your log?").assertIsDisplayed()
+        composeRule.onNodeWithText("2 tags and 2 entries", substring = true).assertIsDisplayed()
+        composeRule.onNodeWithText("Restore").performClick()
+
+        assert(confirmed) { "Expected the restore to be confirmed" }
+    }
+
     private val noopCallbacks = TagCloudCallbacks(
         onAddTagClick = {},
         onDraftNameChange = {},
@@ -512,5 +559,9 @@ class TagCloudContentTest {
         onPurgeClick = {},
         onConfirmPurge = {},
         onDismissPurgeDialog = {},
+        onSaveBackupClick = {},
+        onRestoreClick = {},
+        onConfirmRestore = {},
+        onDismissRestoreDialog = {},
     )
 }

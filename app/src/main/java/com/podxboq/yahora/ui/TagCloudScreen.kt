@@ -115,6 +115,7 @@ data class TagCloudCallbacks(
     val onConfirmColor: (Int) -> Unit,
     val onDismissColorDialog: () -> Unit,
     val onRemoveColor: (Tag) -> Unit,
+    val onStatisticsClick: () -> Unit,
     val onSaveBackupClick: () -> Unit,
     val onRestoreClick: () -> Unit,
     val onConfirmRestore: () -> Unit,
@@ -125,6 +126,7 @@ data class TagCloudCallbacks(
 fun TagCloudScreen(
     viewModel: TagCloudViewModel,
     onOpenTagDetail: (Tag) -> Unit,
+    onOpenStatistics: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -184,6 +186,7 @@ fun TagCloudScreen(
             onConfirmColor = viewModel::onConfirmColor,
             onDismissColorDialog = viewModel::onDismissColorDialog,
             onRemoveColor = viewModel::onRemoveColor,
+            onStatisticsClick = onOpenStatistics,
             onSaveBackupClick = {
                 saveBackupLauncher.launch(viewModel.suggestedBackupFileName())
             },
@@ -542,6 +545,13 @@ private fun OverflowMenu(callbacks: TagCloudCallbacks) {
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_statistics)) },
+                onClick = {
+                    expanded = false
+                    callbacks.onStatisticsClick()
+                },
+            )
+            DropdownMenuItem(
                 text = { Text(stringResource(R.string.menu_save_backup)) },
                 onClick = {
                     expanded = false
@@ -693,7 +703,7 @@ private fun TagCloudContentPreview() {
             ),
             callbacks = TagCloudCallbacks(
                 {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {},
-                {}, {}, {}, {}, {}, {}, {}, {},
+                {}, {}, {}, {}, {}, {}, {}, {}, {},
             ),
         )
     }

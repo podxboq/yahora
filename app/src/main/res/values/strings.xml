@@ -61,6 +61,7 @@
 
     <!-- Backup: the overflow menu of the tag cloud. -->
     <string name="more_options">More options</string>
+    <string name="menu_statistics">Statistics</string>
     <string name="menu_save_backup">Back up</string>
     <string name="menu_restore_backup">Restore backup</string>
     <!-- %1$s is a count of entries, such as "12 entries". -->
@@ -81,6 +82,14 @@
     <string name="restore_done">Log restored with %1$s</string>
     <string name="restore_failed">Could not restore the backup. Your log is unchanged.</string>
 
+    <!-- Statistics screen. -->
+    <string name="statistics_title">Statistics</string>
+    <string name="statistics_empty">Nothing logged yet</string>
+    <!-- Above the tag chips that narrow the counts. -->
+    <string name="statistics_filter">Count only these tags</string>
+    <!-- java.time pattern for a month row under its year. LLLL is the standalone month name. -->
+    <string name="statistics_month_pattern">LLLL</string>
+
     <!-- Tag detail screen. -->
     <string name="action_back">Back</string>
     <string name="tag_detail_empty">No entries yet</string>
@@ -99,6 +108,8 @@
     <string name="bulk_delete_day_text">Every entry of %1$s on %2$s will be deleted. This cannot be undone.</string>
     <!-- %1$s is the tag name. -->
     <string name="bulk_delete_all_text">Every entry of %1$s will be deleted. The tag stays, empty. This cannot be undone.</string>
+    <!-- A month row of the history: %1$s counts its days, %2$s its entries. -->
+    <string name="month_summary">%1$s · %2$s</string>
     <string name="tag_detail_expand">Expand</string>
     <string name="tag_detail_collapse">Collapse</string>
     <!--

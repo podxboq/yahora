@@ -405,9 +405,12 @@ private fun TreeRow(
     }
 }
 
-/** A chevron that turns as the branch opens: the state change is the point. */
+/**
+ * A chevron that turns as the branch opens: the state change is the point.
+ * Shared with the statistics tree, so both trees open the same way.
+ */
 @Composable
-private fun ExpandIndicator(isExpanded: Boolean) {
+internal fun ExpandIndicator(isExpanded: Boolean) {
     val collapsedRotation = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 90f else -90f
     val rotation by animateFloatAsState(
         targetValue = if (isExpanded) 0f else collapsedRotation,
@@ -446,14 +449,20 @@ private fun EntryNode.label(): String {
 private fun dateFormatter(patternRes: Int, locale: Locale): DateTimeFormatter =
     DateTimeFormatter.ofPattern(stringResource(patternRes), locale)
 
-/** How many children the row holds — days or entries, one level down. */
+/**
+ * How many children the row holds, one level down. A month also says how many
+ * entries it holds in all: "how is my coffee going" is answered here, where
+ * the tag's history already is, rather than by a second statistics screen.
+ */
 @Composable
-private fun BranchNode.childCountLabel(): String {
-    val plural = when (this) {
-        is MonthNode -> R.plurals.day_count
-        is DayNode -> R.plurals.entry_count
-    }
-    return pluralStringResource(plural, childCount, childCount)
+private fun BranchNode.childCountLabel(): String = when (this) {
+    is MonthNode -> stringResource(
+        R.string.month_summary,
+        pluralStringResource(R.plurals.day_count, childCount, childCount),
+        pluralStringResource(R.plurals.entry_count, entries.size, entries.size),
+    )
+
+    is DayNode -> pluralStringResource(R.plurals.entry_count, childCount, childCount)
 }
 
 @Preview(showBackground = true)

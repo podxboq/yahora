@@ -82,11 +82,27 @@ class YahoraAppTest {
         composeRule.onNodeWithText("View entries").performClick()
 
         // On the detail: a month row, which the cloud never shows.
-        composeRule.onNodeWithText("1 day").assertIsDisplayed()
+        composeRule.onNodeWithText("1 day · 1 entry").assertIsDisplayed()
 
         composeRule.onNodeWithContentDescription("Back").performClick()
 
         composeRule.onNodeWithText("Add tag").assertIsDisplayed()
-        composeRule.onNodeWithText("1 day").assertDoesNotExist()
+        composeRule.onNodeWithText("1 day · 1 entry").assertDoesNotExist()
+    }
+
+    @Test
+    fun `the overflow menu opens the statistics, and back returns to the cloud`() {
+        composeRule.setContent { YahoraApp(tagRepository, entryRepository, backupRepository) }
+
+        composeRule.onNodeWithContentDescription("More options").performClick()
+        composeRule.onNodeWithText("Statistics").performClick()
+
+        composeRule.onNodeWithText("Count only these tags").assertIsDisplayed()
+        composeRule.onNodeWithText("2025").assertIsDisplayed()
+
+        composeRule.onNodeWithContentDescription("Back").performClick()
+
+        composeRule.onNodeWithText("Add tag").assertIsDisplayed()
+        composeRule.onNodeWithText("Count only these tags").assertDoesNotExist()
     }
 }

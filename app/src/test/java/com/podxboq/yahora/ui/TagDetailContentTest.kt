@@ -56,7 +56,7 @@ class TagDetailContentTest {
         }
 
         composeRule.onNodeWithText("August 2026").assertIsDisplayed()
-        composeRule.onNodeWithText("2 days").assertIsDisplayed()
+        composeRule.onNodeWithText("2 days · 4 entries").assertIsDisplayed()
     }
 
     @Test

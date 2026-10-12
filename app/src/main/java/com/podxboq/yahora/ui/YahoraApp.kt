@@ -26,6 +26,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -34,12 +35,38 @@ import com.podxboq.yahora.data.BackupRepository
 import com.podxboq.yahora.data.EntryRepository
 import com.podxboq.yahora.data.TagRepository
 
+/** Where the app is. The cloud is home; the other two sit on top of it. */
+private sealed interface Destination {
+    data object Cloud : Destination
+    data class TagDetail(val tagId: Long) : Destination
+    data object Statistics : Destination
+}
+
+/** Carries the destination across process death as plain text. */
+private val DestinationSaver = Saver<Destination, String>(
+    save = { destination ->
+        when (destination) {
+            Destination.Cloud -> "cloud"
+            Destination.Statistics -> "statistics"
+            is Destination.TagDetail -> "tag:${destination.tagId}"
+        }
+    },
+    restore = { saved ->
+        when {
+            saved == "statistics" -> Destination.Statistics
+            saved.startsWith("tag:") -> Destination.TagDetail(saved.removePrefix("tag:").toLong())
+            else -> Destination.Cloud
+        }
+    },
+)
+
 /**
- * The whole app: the tag cloud, and one tag's history on top of it.
+ * The whole app: the tag cloud, with one tag's history or the statistics on
+ * top of it.
  *
- * Two destinations do not justify a navigation library — the tag being looked
- * at is the entire back stack, and [rememberSaveable] carries it across process
- * death.
+ * Three destinations, each one step from home, do not justify a navigation
+ * library — the destination is the entire back stack, and [rememberSaveable]
+ * carries it across process death.
  */
 @Composable
 fun YahoraApp(
@@ -48,23 +75,26 @@ fun YahoraApp(
     backupRepository: BackupRepository,
     modifier: Modifier = Modifier,
 ) {
-    var detailTagId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var destination by rememberSaveable(stateSaver = DestinationSaver) {
+        mutableStateOf<Destination>(Destination.Cloud)
+    }
+    val goHome = { destination = Destination.Cloud }
 
-    BackHandler(enabled = detailTagId != null) { detailTagId = null }
+    BackHandler(enabled = destination != Destination.Cloud, onBack = goHome)
 
     AnimatedContent(
-        targetState = detailTagId,
-        // The detail slides in over the cloud and back out again, so the
+        targetState = destination,
+        // Screens slide in over the cloud and back out again, so the
         // hierarchy stays legible instead of the screen simply swapping.
         transitionSpec = {
-            val direction = if (targetState != null) 1 else -1
+            val direction = if (targetState != Destination.Cloud) 1 else -1
             slideInHorizontally { width -> direction * width } + fadeIn() togetherWith fadeOut()
         },
         label = "destination",
         modifier = modifier,
-    ) { tagId ->
-        if (tagId == null) {
-            TagCloudScreen(
+    ) { target ->
+        when (target) {
+            Destination.Cloud -> TagCloudScreen(
                 viewModel = viewModel(
                     factory = TagCloudViewModel.factory(
                         tagRepository,
@@ -72,16 +102,28 @@ fun YahoraApp(
                         backupRepository,
                     ),
                 ),
-                onOpenTagDetail = { tag -> detailTagId = tag.id },
+                onOpenTagDetail = { tag -> destination = Destination.TagDetail(tag.id) },
+                onOpenStatistics = { destination = Destination.Statistics },
             )
-        } else {
-            TagDetailScreen(
+
+            is Destination.TagDetail -> TagDetailScreen(
                 // Keyed by tag: each tag's expansion state is its own.
                 viewModel = viewModel(
-                    key = "tag-detail-$tagId",
-                    factory = TagDetailViewModel.factory(tagId, tagRepository, entryRepository),
+                    key = "tag-detail-${target.tagId}",
+                    factory = TagDetailViewModel.factory(
+                        target.tagId,
+                        tagRepository,
+                        entryRepository,
+                    ),
                 ),
-                onBack = { detailTagId = null },
+                onBack = goHome,
+            )
+
+            Destination.Statistics -> StatisticsScreen(
+                viewModel = viewModel(
+                    factory = StatisticsViewModel.factory(tagRepository, entryRepository),
+                ),
+                onBack = goHome,
             )
         }
     }

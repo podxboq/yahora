@@ -627,6 +627,7 @@ class TagCloudContentTest {
         onConfirmColor = {},
         onDismissColorDialog = {},
         onRemoveColor = {},
+        onStatisticsClick = {},
         onSaveBackupClick = {},
         onRestoreClick = {},
         onConfirmRestore = {},

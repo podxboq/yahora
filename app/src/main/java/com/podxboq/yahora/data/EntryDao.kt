@@ -29,6 +29,10 @@ interface EntryDao {
     @Query("SELECT * FROM entries WHERE tag_id = :tagId ORDER BY timestamp DESC")
     fun observeForTag(tagId: Long): Flow<List<Entry>>
 
+    /** Every entry, for counting. Only the statistics screen needs them all. */
+    @Query("SELECT * FROM entries")
+    fun observeAll(): Flow<List<Entry>>
+
     @Query("SELECT COUNT(*) FROM entries WHERE tag_id = :tagId")
     suspend fun countForTag(tagId: Long): Int
 

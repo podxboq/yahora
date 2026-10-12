@@ -40,6 +40,8 @@ class EntryRepository(
 
     fun observeEntriesForTag(tagId: Long): Flow<List<Entry>> = entryDao.observeForTag(tagId)
 
+    fun observeAllEntries(): Flow<List<Entry>> = entryDao.observeAll()
+
     /** The tags that hold at least one entry, and so cannot be deleted. */
     fun observeTagIdsWithEntries(): Flow<List<Long>> = entryDao.observeTagIdsWithEntries()
 

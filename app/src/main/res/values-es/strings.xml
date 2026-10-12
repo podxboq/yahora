@@ -42,6 +42,7 @@
     <string name="action_rename">Renombrar</string>
 
     <string name="more_options">Más opciones</string>
+    <string name="menu_statistics">Estadísticas</string>
     <string name="menu_save_backup">Hacer copia de seguridad</string>
     <string name="menu_restore_backup">Restaurar copia</string>
     <string name="backup_saved">Copia guardada con %1$s</string>
@@ -56,6 +57,11 @@
     <string name="restore_done">Registro restaurado con %1$s</string>
     <string name="restore_failed">No se pudo restaurar la copia. Tu registro no ha cambiado.</string>
 
+    <string name="statistics_title">Estadísticas</string>
+    <string name="statistics_empty">Aún no hay registros</string>
+    <string name="statistics_filter">Contar solo estas etiquetas</string>
+    <string name="statistics_month_pattern">LLLL</string>
+
     <string name="action_back">Atrás</string>
     <string name="tag_detail_empty">Aún no hay registros</string>
     <string name="entry_menu_delete">Borrar</string>
@@ -68,6 +74,7 @@
     <string name="bulk_delete_month_text">Se borrarán todos los registros de %1$s en %2$s. No se puede deshacer.</string>
     <string name="bulk_delete_day_text">Se borrarán todos los registros de %1$s del %2$s. No se puede deshacer.</string>
     <string name="bulk_delete_all_text">Se borrarán todos los registros de %1$s. La etiqueta se conserva, vacía. No se puede deshacer.</string>
+    <string name="month_summary">%1$s · %2$s</string>
     <string name="tag_detail_expand">Desplegar</string>
     <string name="tag_detail_collapse">Plegar</string>
     <string name="month_year_pattern">LLLL \'de\' yyyy</string>

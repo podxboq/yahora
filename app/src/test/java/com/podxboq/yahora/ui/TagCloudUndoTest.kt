@@ -79,7 +79,7 @@ class TagCloudUndoTest {
 
     @Test
     fun `tapping a tag offers to undo it`() {
-        composeRule.setContent { TagCloudScreen(viewModel, onOpenTagDetail = {}) }
+        composeRule.setContent { TagCloudScreen(viewModel, onOpenTagDetail = {}, onOpenStatistics = {}) }
 
         composeRule.onNodeWithText("Coffee").performClick()
         composeRule.onNodeWithText("Undo").performClick()
@@ -89,7 +89,7 @@ class TagCloudUndoTest {
 
     @Test
     fun `letting the snackbar go keeps the entry`() {
-        composeRule.setContent { TagCloudScreen(viewModel, onOpenTagDetail = {}) }
+        composeRule.setContent { TagCloudScreen(viewModel, onOpenTagDetail = {}, onOpenStatistics = {}) }
 
         composeRule.onNodeWithText("Coffee").performClick()
         // Long past the snackbar's own lifetime.

@@ -48,11 +48,9 @@ Builds:
     gradle:
       - yes
 
-  # Points at the tag until it exists; replace it with the commit v0.2.0
-  # tags before submitting, as was done for 0.1.0.
   - versionName: 0.2.0
     versionCode: 2
-    commit: v0.2.0
+    commit: 63ce77876b7d977a0146bdcc400c4c0f2c781fdc
     subdir: app
     gradle:
       - yes

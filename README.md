@@ -115,6 +115,13 @@ as a merge request. A release is a signed, annotated git tag named `v<version
 name>` — `v0.1.0` for `versionName = "0.1.0"` — and `versionCode` only ever
 goes up.
 
+The APK attached to the GitHub release must be the one F-Droid gets when it
+builds the tag, byte for byte, and a build from the everyday working copy is
+not: leftovers of earlier builds end up in it. `tools/build-release.py v<version
+name> --twice` builds the pushed tag from two fresh clones, refuses to go on
+unless both APKs match and are signed with the key the recipe allows, and
+writes `yahora-<version name>.apk` and `.aab` for GitHub and Play.
+
 ## Contributing
 
 The project is still taking shape, so the scope may shift under you. Issues and

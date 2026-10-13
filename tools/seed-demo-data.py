@@ -67,31 +67,36 @@ PROFILES = {
     "none": None,
 }
 
-# (name, is_favorite, profile). Neither favourite is first in the alphabet, so a
-# screenshot shows what the spec promises: the star changes the emphasis, never
-# the order.
+# Tag colours, as the app stores them: ARGB packed into a signed 32-bit int.
+# A handful only, so the cloud shows coloured and plain chips side by side, and
+# one favourite carries both a star and a colour.
+BROWN, BLUE, RED, GREEN = 0xFF6D4C41, 0xFF1E88E5, 0xFFE53935, 0xFF43A047
+
+# (name, is_favorite, profile[, colour]). Neither favourite is first in the
+# alphabet, so a screenshot shows what the spec promises: the star changes the
+# emphasis, never the order.
 TAGS = {
     "en": [
-        ("Coffee", True, "several_daily"),
+        ("Coffee", True, "several_daily", BROWN),
         ("Cold shower", False, "most_days"),
-        ("Gym", False, "thrice_weekly"),
+        ("Gym", False, "thrice_weekly", BLUE),
         ("Laundry", False, "weekly"),
-        ("Migraine", False, "rare"),
+        ("Migraine", False, "rare", RED),
         ("Nap", True, "occasional"),
         ("Reading", False, "none"),
         ("Stretch", False, "none"),
         ("Tea", False, "occasional"),
-        ("Walk the dog", False, "twice_daily"),
+        ("Walk the dog", False, "twice_daily", GREEN),
     ],
     "es": [
-        ("Café", True, "several_daily"),
+        ("Café", True, "several_daily", BROWN),
         ("Ducha fría", False, "most_days"),
         ("Estiramientos", False, "none"),
-        ("Gimnasio", False, "thrice_weekly"),
+        ("Gimnasio", False, "thrice_weekly", BLUE),
         ("Lavadora", False, "weekly"),
         ("Lectura", False, "none"),
-        ("Migraña", False, "rare"),
-        ("Paseo del perro", False, "twice_daily"),
+        ("Migraña", False, "rare", RED),
+        ("Paseo del perro", False, "twice_daily", GREEN),
         ("Siesta", True, "occasional"),
         ("Té", False, "occasional"),
     ],
@@ -105,6 +110,11 @@ def normalize(name):
     would let a duplicate through the very check the schema exists to enforce.
     """
     return name.strip().lower()
+
+
+def signed(argb):
+    """ARGB as Kotlin's Int sees it: anything with alpha set is negative."""
+    return argb - (1 << 32) if argb >= (1 << 31) else argb
 
 
 def quote(text):
@@ -155,11 +165,12 @@ def sql(locale, weeks, clear):
         # which is the invariant doing its job, not a bug in this script.
         lines += ["DELETE FROM entries;", "DELETE FROM tags;"]
 
-    for name, favorite, profile in TAGS[locale]:
+    for name, favorite, profile, *colour in TAGS[locale]:
         key = normalize(name)
+        color = str(signed(colour[0])) if colour else "NULL"
         lines.append(
-            "INSERT INTO tags (name, is_favorite, name_key) VALUES "
-            f"({quote(name)}, {1 if favorite else 0}, {quote(key)});"
+            "INSERT INTO tags (name, is_favorite, name_key, color) VALUES "
+            f"({quote(name)}, {1 if favorite else 0}, {quote(key)}, {color});"
         )
 
         moments = timestamps(profile, weeks, rng)

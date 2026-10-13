@@ -90,13 +90,20 @@ drawables, and `tools/render-feature-graphic.py` composes the 1024x500 feature
 graphic Google Play asks for from that same vector plus each locale's title and
 tagline.
 
-Screenshots come from a real device carrying a history that was written into a
+Screenshots come from an emulator carrying a history that was written into a
 debug build's database: the tree groups entries by month and day, and timestamps
 are never editable, so an install tapped into existence this afternoon has
 nothing to show. `tools/seed-demo-data.py` is the quickest way to get one — a
-fixed-seed history, so the same run weeks later still matches the screenshots it
-produced. They are then cropped with `tools/crop-screenshot.py`, which takes the
-phone's status and navigation bars off.
+fixed-seed history, with a few coloured tags, so the same run weeks later still
+matches the screenshots it produced. An emulator rather than a phone keeps a
+real log out of harm's way, since `--clear` empties the database, and gives the
+same frame every time. A debug build offers "Delete with its entries", which
+the release does not, so build the one used for screenshots with
+`canPurgeTags = false` in `MainActivity` and leave that change uncommitted. The
+Spanish captures need no change of system language: `adb shell cmd locale
+set-app-locales com.podxboq.yahora --locales es-ES` switches the app alone. The
+images are then cropped with `tools/crop-screenshot.py`, which takes the
+status and navigation bars off.
 
 The project pages at <https://podxboq.github.io/yahora/> are served by GitHub
 Pages from `docs/` in this repository, and exist because Google Play asks for

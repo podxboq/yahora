@@ -67,13 +67,6 @@ data class TagCloudUiState(
     /** The tags that hold entries. They are the ones that cannot be deleted. */
     val tagIdsWithEntries: Set<Long> = emptySet(),
     /**
-     * Whether this build offers discarding a tag's history along with the tag.
-     * False in the app that ships; see [TagRepository.purgeTag].
-     */
-    val canPurgeTags: Boolean = false,
-    /** The tag whose purge is waiting to be confirmed, if any. */
-    val purgingTag: Tag? = null,
-    /**
      * A backup already read and checked, waiting for the user to confirm that
      * it may replace the log. Null when no restore is pending.
      */
@@ -123,7 +116,7 @@ class TagCloudViewModel(
     private val backupRepository: BackupRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(TagCloudUiState(canPurgeTags = tagRepository.canPurgeTags))
+    private val _uiState = MutableStateFlow(TagCloudUiState())
     val uiState: StateFlow<TagCloudUiState> = _uiState.asStateFlow()
 
     private val _messages = Channel<TagCloudMessage>(Channel.BUFFERED)
@@ -228,25 +221,6 @@ class TagCloudViewModel(
                     _messages.send(TagCloudMessage.DeleteFailed(tag.name))
             }
         }
-    }
-
-    /**
-     * Asks before discarding a tag together with its history. Deleting an empty
-     * tag needs no confirmation because nothing is lost; this one does, for the
-     * same reason deleting a single entry does.
-     */
-    fun onPurgeClick(tag: Tag) {
-        _uiState.update { it.copy(menuTagId = null, purgingTag = tag) }
-    }
-
-    fun onDismissPurgeDialog() {
-        _uiState.update { it.copy(purgingTag = null) }
-    }
-
-    fun onConfirmPurge() {
-        val tag = _uiState.value.purgingTag ?: return
-        onDismissPurgeDialog()
-        viewModelScope.launch { tagRepository.purgeTag(tag.id) }
     }
 
     /** Opens the rename dialog on the name the tag has now, ready to be edited. */

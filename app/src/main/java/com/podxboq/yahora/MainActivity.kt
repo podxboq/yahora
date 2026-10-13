@@ -35,10 +35,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val database = YahoraDatabase.getInstance(applicationContext)
-        // Discarding a tag's history is a debug-only affordance: it exists so a
-        // session of trying the app out can be cleared, and the app that ships
-        // keeps the rule that history outlives tags.
-        val tagRepository = TagRepository(database.tagDao(), canPurgeTags = BuildConfig.DEBUG)
+        val tagRepository = TagRepository(database.tagDao())
         val entryRepository = EntryRepository(database.entryDao())
         val backupRepository = BackupRepository(
             database.backupDao(),

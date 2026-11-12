@@ -5,9 +5,11 @@ time of a recurring event — nothing else. Tags are laid out as a cloud of
 uniform chips, and logging something takes a single touch: no intermediate
 screen, no confirmation dialog, no extra fields.
 
-> **Early days.** Yahora works and is being prepared for its first release
-> (0.1.0), but it is still young: the scope below is what the app does today,
-> and it may still shift.
+Yahora is available on
+[F-Droid](https://f-droid.org/packages/com.podxboq.yahora/) and
+[Google Play](https://play.google.com/store/apps/details?id=com.podxboq.yahora).
+It is still young: the scope below is what the app does today, and it may still
+shift.
 
 ## Concept
 
@@ -77,8 +79,11 @@ JDK during the build is incompatible with how F-Droid builds this app.
 ## Distribution
 
 Free software from the start, with no freemium model, no ads and no in-app
-purchases. F-Droid is the first channel; GitHub releases and Google Play are
-meant to follow.
+purchases. Yahora is published on
+[F-Droid](https://f-droid.org/packages/com.podxboq.yahora/), its first channel,
+on [Google Play](https://play.google.com/store/apps/details?id=com.podxboq.yahora),
+and as an APK attached to each
+[GitHub release](https://github.com/podxboq/yahora/releases).
 
 The store listing lives in this repository, under
 `fastlane/metadata/android/<locale>/`, which is where F-Droid reads it from —

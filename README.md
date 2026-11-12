@@ -83,8 +83,7 @@ purchases. Yahora is published on
 [F-Droid](https://f-droid.org/packages/com.podxboq.yahora/), its first channel,
 on [Google Play](https://play.google.com/store/apps/details?id=com.podxboq.yahora),
 and as an APK attached to each
-[GitHub release](https://github.com/podxboq/yahora/releases). All three carry
-the same signed binary, so switching between them needs no reinstall.
+[GitHub release](https://github.com/podxboq/yahora/releases).
 
 The store listing lives in this repository, under
 `fastlane/metadata/android/<locale>/`, which is where F-Droid reads it from —
